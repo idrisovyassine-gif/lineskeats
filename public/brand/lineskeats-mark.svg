@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <title>Lineskeats Mark</title>
+  <desc>Map pin with a monogram L crossed by a sync line.</desc>
+  <path d="M128 24C86.026 24 52 58.026 52 100C52 155.064 128 232 128 232C128 232 204 155.064 204 100C204 58.026 169.974 24 128 24Z" fill="#6E1932"/>
+  <path d="M128 42C95.967 42 70 67.967 70 100C70 140.567 128 199.16 128 199.16C128 199.16 186 140.567 186 100C186 67.967 160.033 42 128 42Z" fill="#FFF7EF"/>
+  <path d="M116 62V138H154" stroke="#6E1932" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M116 102H194" stroke="#6E1932" stroke-width="12" stroke-linecap="round"/>
+  <path d="M54 102H116" stroke="#6E1932" stroke-width="8" stroke-linecap="round"/>
+  <path d="M186 94L202 102L186 110" stroke="#6E1932" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="214" cy="102" r="8" fill="#6E1932"/>
+</svg>

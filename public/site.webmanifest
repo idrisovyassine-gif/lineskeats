@@ -1,0 +1,16 @@
+{
+  "name": "Lineskeats",
+  "short_name": "Lineskeats",
+  "description": "Le bon endroit, au bon moment. Cuisine et retrait synchronises.",
+  "theme_color": "#6E1932",
+  "background_color": "#FFF7EF",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "/brand/lineskeats-app-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

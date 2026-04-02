@@ -6,6 +6,7 @@ import LocationPicker from "./components/LocationPicker"
 import CuisineTypeSelector from "./components/CuisineTypeSelector"
 import WaitTimeManager from "./components/WaitTimeManager"
 import ClientInterface from "./components/ClientInterface"
+import BrandLogo from "./components/BrandLogo"
 
 const currency = (value) =>
   new Intl.NumberFormat("fr-BE", {
@@ -86,6 +87,7 @@ function RestaurantSignup() {
     return (
       <div className="lineskeats-theme min-h-screen bg-slate-950 text-slate-100">
         <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6">
+          <BrandLogo preset="md" tone="dark" showTagline showSubline className="mb-8" />
           <h1 className="text-3xl font-semibold text-white">
             Espace restaurant
           </h1>
@@ -133,6 +135,7 @@ function RestaurantSignup() {
     <div className="lineskeats-theme min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6">
         <div className="theme-header-panel w-full px-6 py-8">
+          <BrandLogo preset="md" tone="dark" showTagline showSubline className="mb-6" />
           <h1 className="text-3xl font-semibold text-white">
             {authMode === "login" ? "Connexion" : "Inscription"}
           </h1>
@@ -1139,6 +1142,7 @@ export default function App() {
       <div className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-6">
         <div className="theme-header-panel mb-5 flex flex-col gap-4 px-4 py-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
           <div>
+            <BrandLogo preset="sm" tone="dark" showTagline={false} className="mb-3" />
             <h1 className="lineskeats-brand text-[1.9rem] font-bold leading-none text-white sm:text-2xl">
               {restaurant?.name || "Tableau de bord"}
             </h1>

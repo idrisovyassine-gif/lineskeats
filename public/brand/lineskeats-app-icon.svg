@@ -1,7 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
-  <title>Lineskeats Favicon</title>
-  <rect width="256" height="256" rx="64" fill="#FFF7EF"/>
-  <g transform="translate(0 4)">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <title>Lineskeats App Icon</title>
+  <rect width="512" height="512" rx="120" fill="#FFF7EF"/>
+  <rect x="34" y="34" width="444" height="444" rx="98" stroke="#E6D7C7" stroke-width="8"/>
+  <g transform="translate(40 52) scale(1.6875)">
     <path d="M128 24C86.026 24 52 58.026 52 100C52 155.064 128 232 128 232C128 232 204 155.064 204 100C204 58.026 169.974 24 128 24Z" fill="#6E1932"/>
     <path d="M128 42C95.967 42 70 67.967 70 100C70 140.567 128 199.16 128 199.16C128 199.16 186 140.567 186 100C186 67.967 160.033 42 128 42Z" fill="#FFF7EF"/>
     <path d="M116 62V138H154" stroke="#6E1932" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>

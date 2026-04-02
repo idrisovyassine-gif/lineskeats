@@ -3,6 +3,7 @@ import RestaurantMap from "./RestaurantMap"
 import { useCallback } from "react"
 import { supabase } from "../lib/supabaseClient"
 import { getDisplayCuisineLabel } from "../lib/cuisineLabels"
+import BrandLogo from "./BrandLogo"
 
 const fallbackImage =
   "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80"
@@ -983,9 +984,13 @@ export default function ClientInterface() {
       <div className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-8">
         <div className="theme-header-panel mb-5 px-4 py-4 sm:mb-8 sm:px-8 sm:py-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <h1 className="lineskeats-brand text-[2rem] font-bold leading-none text-white sm:text-3xl">
-              Lineskeats
-            </h1>
+            <BrandLogo
+              preset="lg"
+              tone="dark"
+              showTagline={true}
+              showSubline={false}
+              className="shrink-0"
+            />
             <p className="mt-2 max-w-xl text-[0.8rem] leading-snug text-slate-300 sm:max-w-2xl sm:text-base">
               Qu est-ce que tu peux recuperer le plus vite maintenant ? Ici, on ne vend pas juste
               des restos: on synchronise ton retrait au bon moment.
