@@ -1,0 +1,369 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import './styles/fonts.css';
+
+:root {
+  --ls-bg: #f8f1e6;
+  --ls-surface: #fffdf9;
+  --ls-surface-soft: #f4ecdf;
+  --ls-surface-muted: #eadfce;
+  --ls-text: #334155;
+  --ls-text-soft: #64748b;
+  --ls-text-faint: #94a3b8;
+  --ls-header: #3e2a36;
+  --ls-header-soft: #5a3947;
+  --ls-emerald: #8f4052;
+  --ls-emerald-strong: #743243;
+  --ls-emerald-soft: rgba(143, 64, 82, 0.14);
+  --ls-emerald-border: rgba(143, 64, 82, 0.28);
+  --ls-bordeaux: #c67a5b;
+  --ls-bordeaux-soft: rgba(198, 122, 91, 0.14);
+  --ls-bordeaux-border: rgba(198, 122, 91, 0.24);
+  --ls-amber: #9a6a1f;
+  --ls-amber-soft: rgba(196, 145, 59, 0.14);
+  --ls-amber-border: rgba(196, 145, 59, 0.24);
+  --ls-border: rgba(51, 65, 85, 0.12);
+  --ls-shadow: 0 18px 48px rgba(62, 42, 54, 0.08);
+}
+
+/* Styles personnalisés Lineskeats */
+.lineskeats-brand {
+  font-family: "DR Exclusive Editorial";
+}
+
+.lineskeats-menu {
+  font-family: "Medicinal Compound";
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    @apply antialiased;
+    background: var(--ls-bg);
+    color: var(--ls-text);
+    font-family: "Evogria";
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--ls-header);
+    font-family: "DR Exclusive Editorial";
+  }
+
+  button,
+  input,
+  textarea,
+  select,
+  label,
+  p,
+  span,
+  a,
+  li {
+    font-family: inherit;
+  }
+}
+
+.lineskeats-theme {
+  background: var(--ls-bg);
+  color: var(--ls-text);
+}
+
+.lineskeats-theme input::placeholder,
+.lineskeats-theme textarea::placeholder {
+  color: var(--ls-text-faint);
+}
+
+.lineskeats-theme .bg-slate-950,
+.lineskeats-theme .bg-slate-950\/95,
+.lineskeats-theme .bg-slate-950\/90,
+.lineskeats-theme .bg-slate-950\/80,
+.lineskeats-theme .bg-slate-950\/70,
+.lineskeats-theme .bg-slate-950\/60,
+.lineskeats-theme .bg-slate-950\/50,
+.lineskeats-theme .bg-slate-950\/40,
+.lineskeats-theme .bg-slate-900\/70,
+.lineskeats-theme .bg-slate-900\/60,
+.lineskeats-theme .bg-slate-900\/50,
+.lineskeats-theme .bg-slate-900\/40 {
+  background-color: var(--ls-surface) !important;
+}
+
+.lineskeats-theme .border-white\/5,
+.lineskeats-theme .border-white\/10,
+.lineskeats-theme .border-white\/15,
+.lineskeats-theme .border-white\/20,
+.lineskeats-theme .border-white\/30,
+.lineskeats-theme .border-white\/40 {
+  border-color: var(--ls-border) !important;
+}
+
+.lineskeats-theme .text-slate-100,
+.lineskeats-theme .text-slate-300,
+.lineskeats-theme .text-slate-400,
+.lineskeats-theme .text-slate-500,
+.lineskeats-theme .text-white\/70,
+.lineskeats-theme .text-white\/80,
+.lineskeats-theme .text-gray-300,
+.lineskeats-theme .text-gray-500,
+.lineskeats-theme .text-gray-600 {
+  color: var(--ls-text-soft) !important;
+}
+
+.lineskeats-theme .text-white,
+.lineskeats-theme .text-slate-950 {
+  color: var(--ls-header) !important;
+}
+
+.lineskeats-theme .placeholder\:text-slate-600::placeholder {
+  color: var(--ls-text-faint) !important;
+}
+
+.lineskeats-theme .bg-emerald-400,
+.lineskeats-theme .bg-emerald-500 {
+  background-color: var(--ls-emerald) !important;
+  border-color: var(--ls-emerald) !important;
+}
+
+.lineskeats-theme .bg-blue-500 {
+  background-color: var(--ls-header-soft) !important;
+  border-color: var(--ls-header-soft) !important;
+}
+
+.lineskeats-theme .bg-emerald-500\/10,
+.lineskeats-theme .bg-emerald-500\/15 {
+  background-color: var(--ls-emerald-soft) !important;
+}
+
+.lineskeats-theme .border-emerald-500\/20,
+.lineskeats-theme .border-emerald-300\/30,
+.lineskeats-theme .border-emerald-300\/40,
+.lineskeats-theme .border-emerald-200\/20,
+.lineskeats-theme .border-emerald-400\/10 {
+  border-color: var(--ls-emerald-border) !important;
+}
+
+.lineskeats-theme .text-emerald-200,
+.lineskeats-theme .text-emerald-200\/80,
+.lineskeats-theme .text-emerald-400,
+.lineskeats-theme .text-emerald-600 {
+  color: var(--ls-emerald-strong) !important;
+}
+
+.lineskeats-theme .bg-amber-500\/10,
+.lineskeats-theme .bg-amber-500\/15 {
+  background-color: var(--ls-amber-soft) !important;
+}
+
+.lineskeats-theme .border-amber-500\/30 {
+  border-color: var(--ls-amber-border) !important;
+}
+
+.lineskeats-theme .text-amber-100,
+.lineskeats-theme .text-amber-200 {
+  color: var(--ls-amber) !important;
+}
+
+.lineskeats-theme .bg-rose-500\/10,
+.lineskeats-theme .bg-red-500\/10,
+.lineskeats-theme .bg-red-50 {
+  background-color: var(--ls-bordeaux-soft) !important;
+}
+
+.lineskeats-theme .border-rose-500\/30,
+.lineskeats-theme .border-rose-400\/30,
+.lineskeats-theme .border-red-500\/20,
+.lineskeats-theme .border-red-200 {
+  border-color: var(--ls-bordeaux-border) !important;
+}
+
+.lineskeats-theme .text-rose-100,
+.lineskeats-theme .text-rose-200,
+.lineskeats-theme .text-rose-300,
+.lineskeats-theme .text-red-400,
+.lineskeats-theme .text-red-700 {
+  color: var(--ls-bordeaux) !important;
+}
+
+.lineskeats-theme .hover\:bg-emerald-300:hover,
+.lineskeats-theme .hover\:bg-emerald-500:hover,
+.lineskeats-theme .hover\:bg-emerald-600:hover {
+  background-color: var(--ls-emerald-strong) !important;
+}
+
+.lineskeats-theme .hover\:bg-blue-600:hover {
+  background-color: var(--ls-header) !important;
+}
+
+.lineskeats-theme .hover\:text-emerald-100:hover,
+.lineskeats-theme .hover\:text-emerald-300:hover,
+.lineskeats-theme .hover\:text-emerald-200:hover {
+  color: var(--ls-emerald-strong) !important;
+}
+
+.lineskeats-theme .hover\:text-white:hover,
+.lineskeats-theme .hover\:text-slate-300:hover {
+  color: var(--ls-header) !important;
+}
+
+.lineskeats-theme .hover\:border-white\/30:hover,
+.lineskeats-theme .hover\:border-white\/40:hover,
+.lineskeats-theme .hover\:border-white\/20:hover {
+  border-color: rgba(31, 77, 67, 0.25) !important;
+}
+
+.lineskeats-theme .rounded-3xl,
+.lineskeats-theme .rounded-2xl,
+.lineskeats-theme .rounded-xl {
+  box-shadow: var(--ls-shadow);
+}
+
+.lineskeats-theme .theme-header-panel {
+  background: linear-gradient(135deg, var(--ls-header), var(--ls-header-soft));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  box-shadow: 0 20px 50px rgba(31, 77, 67, 0.18);
+}
+
+.lineskeats-theme .theme-header-panel .text-white,
+.lineskeats-theme .theme-header-panel .text-white\/70,
+.lineskeats-theme .theme-header-panel .text-slate-300,
+.lineskeats-theme .theme-header-panel .text-slate-400,
+.lineskeats-theme .theme-header-panel .text-slate-500,
+.lineskeats-theme .theme-header-panel h1,
+.lineskeats-theme .theme-header-panel h2,
+.lineskeats-theme .theme-header-panel h3,
+.lineskeats-theme .theme-header-panel p,
+.lineskeats-theme .theme-header-panel a,
+.lineskeats-theme .theme-header-panel span {
+  color: #f8f4ed !important;
+}
+
+.lineskeats-theme .theme-header-panel .border-white\/10,
+.lineskeats-theme .theme-header-panel .border-white\/30,
+.lineskeats-theme .theme-header-panel .border-white\/40 {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.lineskeats-theme .theme-header-panel .bg-emerald-400,
+.lineskeats-theme .theme-header-panel .bg-emerald-500 {
+  background-color: #f8f4ed !important;
+  border-color: #f8f4ed !important;
+  color: var(--ls-header) !important;
+}
+
+.lineskeats-theme .leaflet-popup-content-wrapper,
+.lineskeats-theme .leaflet-popup-tip {
+  background: var(--ls-surface);
+  color: var(--ls-text);
+  box-shadow: var(--ls-shadow);
+}
+
+.lineskeats-theme .leaflet-control-zoom a,
+.lineskeats-theme .leaflet-bar a {
+  background: var(--ls-surface);
+  color: var(--ls-header);
+  border-color: var(--ls-border);
+}
+
+@layer utilities {
+  .glass {
+    backdrop-filter: blur(16px);
+    background: rgba(255, 253, 249, 0.8);
+  }
+}
+
+.restaurant-marker-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 96px;
+}
+
+.restaurant-name-badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 112px;
+  overflow: hidden;
+  padding: 4px 10px;
+  border: 1px solid rgba(31, 77, 67, 0.16);
+  border-radius: 9999px;
+  background: rgba(255, 253, 249, 0.96);
+  color: var(--ls-header);
+  font-family: "DR Exclusive Editorial";
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: 0 10px 26px rgba(31, 77, 67, 0.12);
+}
+
+.restaurant-wait-badge {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 52px;
+  padding: 4px 8px;
+  border: 1px solid var(--ls-emerald-border);
+  border-radius: 9999px;
+  background: rgba(255, 253, 249, 0.96);
+  color: var(--ls-emerald-strong);
+  font-family: "Evogria";
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 10px 26px rgba(31, 77, 67, 0.12);
+}
+
+.restaurant-marker-pin {
+  width: 25px;
+  height: 41px;
+  object-fit: contain;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 640px) {
+  .restaurant-marker-wrap {
+    width: 100px;
+    height: 84px;
+  }
+
+  .restaurant-name-badge {
+    max-width: 92px;
+    padding: 3px 8px;
+    font-size: 9px;
+  }
+
+  .restaurant-wait-badge {
+    top: 24px;
+    min-width: 46px;
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+
+  .restaurant-marker-pin {
+    width: 22px;
+    height: 36px;
+  }
+}
+
