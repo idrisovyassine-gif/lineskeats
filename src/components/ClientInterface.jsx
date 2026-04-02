@@ -80,11 +80,11 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 const estimateTravelMinutes = (distanceKm) => {
   if (!Number.isFinite(distanceKm)) return null
 
-  if (distanceKm <= 1.2) {
-    return Math.max(4, Math.round(distanceKm * 10))
+  if (distanceKm <= 0.25) {
+    return 3
   }
 
-  return Math.max(6, Math.round(distanceKm * 3.6 + 4))
+  return Math.max(4, Math.round(distanceKm * 12))
 }
 
 const formatReadyLabel = (minutes) => `Pret dans ${minutes} min`
@@ -119,6 +119,28 @@ const getPickupScore = ({ waitTime, totalPickupMinutes, travelMinutes }) => {
     tone: "rose",
     detail: "Bon choix si tu anticipes",
   }
+}
+
+const getPickupRankingValue = ({ waitTime, travelMinutes, distanceKm }) => {
+  if (travelMinutes === null) {
+    return waitTime
+  }
+
+  let rankingValue = waitTime + travelMinutes
+
+  if (travelMinutes > 12) {
+    rankingValue += (travelMinutes - 12) * 4
+  }
+
+  if (travelMinutes > 20) {
+    rankingValue += 60 + (travelMinutes - 20) * 8
+  }
+
+  if (distanceKm > 2.5) {
+    rankingValue += 90
+  }
+
+  return rankingValue
 }
 
 const extractCityName = (address = "") => {
@@ -533,6 +555,11 @@ export default function ClientInterface() {
             totalPickupMinutes,
             travelMinutes,
           })
+          const pickupRankingValue = getPickupRankingValue({
+            waitTime,
+            travelMinutes,
+            distanceKm,
+          })
 
           return {
             ...restaurant,
@@ -545,15 +572,16 @@ export default function ClientInterface() {
             pickupAtLabel: formatClockFromNow(totalPickupMinutes),
             readyLabel: formatReadyLabel(waitTime),
             pickupScore,
+            pickupRankingValue,
             cityName: extractCityName(restaurant.address),
           }
         })
         .sort((firstRestaurant, secondRestaurant) => {
           const firstScore = userLocation
-            ? firstRestaurant.totalPickupMinutes
+            ? firstRestaurant.pickupRankingValue
             : firstRestaurant.waitTime
           const secondScore = userLocation
-            ? secondRestaurant.totalPickupMinutes
+            ? secondRestaurant.pickupRankingValue
             : secondRestaurant.waitTime
 
           if (firstScore !== secondScore) {
@@ -580,7 +608,15 @@ export default function ClientInterface() {
   const bestRestaurantNow = filteredRestaurants[0] || null
 
   const liveCityLeaders = useMemo(() => {
-    const statsByCity = filteredRestaurants.reduce((acc, restaurant) => {
+    const restaurantsForCityLeaders = userLocation
+      ? filteredRestaurants.filter(
+          (restaurant) =>
+            restaurant.travelMinutes === null ||
+            (restaurant.travelMinutes <= 20 && (restaurant.distanceKm ?? 0) <= 2.5)
+        )
+      : filteredRestaurants
+
+    const statsByCity = restaurantsForCityLeaders.reduce((acc, restaurant) => {
       const cityName = restaurant.cityName
       if (!acc[cityName]) {
         acc[cityName] = {
@@ -614,7 +650,7 @@ export default function ClientInterface() {
         return firstEntry.averageWaitMinutes - secondEntry.averageWaitMinutes
       })
       .slice(0, 3)
-  }, [filteredRestaurants])
+  }, [filteredRestaurants, userLocation])
 
   const isSelectedRestaurantPaymentReady = CLIENT_PAYMENT_ENABLED
     ? Boolean(selectedRestaurant?.accepts_online_payment)
@@ -1137,7 +1173,7 @@ export default function ClientInterface() {
                             </span>
                             {bestRestaurantNow.travelMinutes ? (
                               <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-widest text-white">
-                                Trajet estime {bestRestaurantNow.travelMinutes} min
+                                A pied {bestRestaurantNow.travelMinutes} min
                               </span>
                             ) : null}
                           </div>
@@ -1203,8 +1239,8 @@ export default function ClientInterface() {
                             </p>
                             <p className="mt-2 text-sm text-white/70">
                               {userLocation
-                                ? `Cuisine ${bestRestaurantNow.waitTime} min + trajet ${bestRestaurantNow.travelMinutes} min.`
-                                : "Active ta localisation sur la carte pour synchroniser le trajet."}
+                                ? `Cuisine ${bestRestaurantNow.waitTime} min + marche ${bestRestaurantNow.travelMinutes} min.`
+                                : "Active ta localisation sur la carte pour synchroniser la marche."}
                             </p>
                           </div>
                           <div className="rounded-3xl border border-white/15 bg-black/10 p-4">
@@ -1213,7 +1249,7 @@ export default function ClientInterface() {
                             </p>
                             <p className="mt-2 text-sm text-white/80">
                               {bestRestaurantNow.pickupScore.detail}. Le moteur priorise le temps
-                              de cuisine live puis le trajet si ta position est connue.
+                              de cuisine live puis un retrait accessible a pied.
                             </p>
                           </div>
                         </div>
@@ -1327,7 +1363,7 @@ export default function ClientInterface() {
                       </h3>
                       <p className="text-xs text-slate-400 sm:text-sm">
                         Chaque pin suit le temps de cuisine live. Active ta position pour voir le
-                        meilleur combo cuisine + trajet.
+                        meilleur combo cuisine + marche.
                       </p>
                     </div>
                   </div>
@@ -1979,7 +2015,7 @@ export default function ClientInterface() {
                             <p className="mt-1 text-xs text-slate-400">
                               Retrait vise a {selectedRestaurant.readyAtLabel}
                               {selectedRestaurant.travelMinutes
-                                ? `, trajet estime ${selectedRestaurant.travelMinutes} min.`
+                                ? `, a environ ${selectedRestaurant.travelMinutes} min a pied.`
                                 : "."}
                             </p>
                           )}
