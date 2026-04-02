@@ -143,16 +143,6 @@ const getPickupRankingValue = ({ waitTime, travelMinutes, distanceKm }) => {
   return rankingValue
 }
 
-const extractCityName = (address = "") => {
-  const parts = String(address)
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean)
-  const lastPart = parts.at(-1) || ""
-  const match = lastPart.match(/\b\d{4,5}\s+(.+)$/)
-  return match?.[1] || lastPart || "Ville inconnue"
-}
-
 const isMissingPublicRestaurantLiveError = (error) => {
   const message = String(error?.message || "").toLowerCase()
   return (
@@ -573,7 +563,6 @@ export default function ClientInterface() {
             readyLabel: formatReadyLabel(waitTime),
             pickupScore,
             pickupRankingValue,
-            cityName: extractCityName(restaurant.address),
           }
         })
         .sort((firstRestaurant, secondRestaurant) => {
@@ -607,50 +596,13 @@ export default function ClientInterface() {
 
   const bestRestaurantNow = filteredRestaurants[0] || null
 
-  const liveCityLeaders = useMemo(() => {
-    const restaurantsForCityLeaders = userLocation
-      ? filteredRestaurants.filter(
-          (restaurant) =>
-            restaurant.travelMinutes === null ||
-            (restaurant.travelMinutes <= 20 && (restaurant.distanceKm ?? 0) <= 2.5)
-        )
-      : filteredRestaurants
+  const liveRestaurantLeaders = useMemo(() => {
+    if (filteredRestaurants.length <= 1) {
+      return filteredRestaurants.slice(0, 3)
+    }
 
-    const statsByCity = restaurantsForCityLeaders.reduce((acc, restaurant) => {
-      const cityName = restaurant.cityName
-      if (!acc[cityName]) {
-        acc[cityName] = {
-          cityName,
-          totalWaitMinutes: 0,
-          count: 0,
-          bestReadyMinutes: restaurant.waitTime,
-        }
-      }
-
-      acc[cityName].count += 1
-      acc[cityName].totalWaitMinutes += restaurant.waitTime
-      acc[cityName].bestReadyMinutes = Math.min(
-        acc[cityName].bestReadyMinutes,
-        restaurant.waitTime
-      )
-
-      return acc
-    }, {})
-
-    return Object.values(statsByCity)
-      .map((entry) => ({
-        ...entry,
-        averageWaitMinutes: Math.round(entry.totalWaitMinutes / entry.count),
-      }))
-      .sort((firstEntry, secondEntry) => {
-        if (firstEntry.bestReadyMinutes !== secondEntry.bestReadyMinutes) {
-          return firstEntry.bestReadyMinutes - secondEntry.bestReadyMinutes
-        }
-
-        return firstEntry.averageWaitMinutes - secondEntry.averageWaitMinutes
-      })
-      .slice(0, 3)
-  }, [filteredRestaurants, userLocation])
+    return filteredRestaurants.slice(1, 4)
+  }, [filteredRestaurants])
 
   const isSelectedRestaurantPaymentReady = CLIENT_PAYMENT_ENABLED
     ? Boolean(selectedRestaurant?.accepts_online_payment)
@@ -1057,10 +1009,10 @@ export default function ClientInterface() {
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                 <p className="text-[10px] uppercase tracking-widest text-slate-300">
-                  Villes en direct
+                  Restaurants affiches
                 </p>
                 <p className="mt-2 text-sm font-semibold text-white">
-                  {liveCityLeaders[0]?.cityName || "Chargement"}
+                  {filteredRestaurants.length} visible{filteredRestaurants.length > 1 ? "s" : ""}
                 </p>
               </div>
             </div>
@@ -1260,36 +1212,43 @@ export default function ClientInterface() {
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-[10px] uppercase tracking-widest text-slate-400">
-                            Villes en direct
+                            Restaurants en direct
                           </p>
                           <h3 className="lineskeats-menu mt-2 text-lg font-semibold text-white">
-                            Les cuisines qui tournent le mieux
+                            Les retraits les plus rapides maintenant
                           </h3>
                         </div>
                       </div>
                       <div className="mt-4 space-y-3">
-                        {liveCityLeaders.map((city, index) => (
-                          <div
-                            key={city.cityName}
-                            className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3"
+                        {liveRestaurantLeaders.map((restaurant, index) => (
+                          <button
+                            key={restaurant.id}
+                            type="button"
+                            onClick={() => navigateToClient(restaurant.id)}
+                            className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-left transition hover:border-white/20 hover:bg-slate-950/70"
                           >
                             <div>
                               <p className="text-[10px] uppercase tracking-widest text-slate-400">
                                 #{index + 1}
                               </p>
                               <p className="mt-1 text-sm font-semibold text-white">
-                                {city.cityName}
+                                {restaurant.name}
+                              </p>
+                              <p className="mt-1 text-[11px] text-slate-400">
+                                {restaurant.travelMinutes
+                                  ? `${restaurant.travelMinutes} min a pied`
+                                  : "Temps cuisine prioritaire"}
                               </p>
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-semibold text-emerald-200">
-                                {city.bestReadyMinutes} min
+                                {restaurant.waitTime} min
                               </p>
                               <p className="text-[11px] text-slate-400">
-                                moyenne {city.averageWaitMinutes} min
+                                retrait vers {restaurant.pickupAtLabel}
                               </p>
                             </div>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </aside>
