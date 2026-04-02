@@ -202,7 +202,7 @@ function RestaurantSignup() {
           </button>
           <div>
             <a
-              href="/client"
+              href="/"
               className="text-sm text-slate-500 hover:text-slate-300"
             >
               &larr; Retour a l&apos;espace client
@@ -264,11 +264,6 @@ export default function App() {
 
   useEffect(() => {
     const updateRoute = () => setRoute(getAppRoute().path)
-
-    if (window.location.pathname === "/") {
-      window.history.replaceState({}, "", "/client")
-      updateRoute()
-    }
 
     window.addEventListener("popstate", updateRoute)
     window.addEventListener("hashchange", updateRoute)

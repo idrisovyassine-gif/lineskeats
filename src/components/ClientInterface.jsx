@@ -33,7 +33,7 @@ const getSelectedRestaurantIdFromUrl = () => {
 }
 
 const navigateToClient = (restaurantId = null) => {
-  const targetUrl = restaurantId ? `/client?restaurant=${restaurantId}` : "/client"
+  const targetUrl = restaurantId ? `/?restaurant=${restaurantId}` : "/"
   window.history.pushState({}, "", targetUrl)
   window.dispatchEvent(new PopStateEvent("popstate"))
 }
@@ -342,7 +342,7 @@ export default function ClientInterface() {
       setCheckoutSuccessOrderId(null)
     }
 
-    const nextUrl = restaurantId ? `/client?restaurant=${restaurantId}` : "/client"
+    const nextUrl = restaurantId ? `/?restaurant=${restaurantId}` : "/"
     window.history.replaceState({}, "", nextUrl)
   }, [])
 
@@ -856,8 +856,8 @@ export default function ClientInterface() {
               email: checkoutForm.customerEmail.trim(),
             },
             payment_mode: CLIENT_PAYMENT_ENABLED ? "stripe" : "direct",
-            success_url: `${siteOrigin}/client?restaurant=${selectedRestaurant.id}&checkout=success`,
-            cancel_url: `${siteOrigin}/client?restaurant=${selectedRestaurant.id}&checkout=cancel`,
+            success_url: `${siteOrigin}/?restaurant=${selectedRestaurant.id}&checkout=success`,
+            cancel_url: `${siteOrigin}/?restaurant=${selectedRestaurant.id}&checkout=cancel`,
           }),
         }
       )
@@ -1508,7 +1508,7 @@ export default function ClientInterface() {
           <div className="space-y-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <a
-                href="/client"
+                href="/"
                 className="self-start rounded-full border border-white/10 px-4 py-2 text-[10px] uppercase tracking-widest text-white/70 hover:border-white/30 hover:text-white sm:text-xs"
               >
                 Retour
