@@ -983,18 +983,27 @@ export default function ClientInterface() {
       )}
       <div className="mx-auto max-w-7xl px-3 py-4 sm:px-4 sm:py-8">
         <div className="theme-header-panel mb-5 px-4 py-4 sm:mb-8 sm:px-8 sm:py-6">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <BrandLogo
-              preset="lg"
-              tone="dark"
-              showTagline={true}
-              showSubline={false}
-              className="shrink-0"
-            />
-            <p className="mt-2 max-w-xl text-[0.8rem] leading-snug text-slate-300 sm:max-w-2xl sm:text-base">
-              Qu est-ce que tu peux recuperer le plus vite maintenant ? Ici, on ne vend pas juste
-              des restos: on synchronise ton retrait au bon moment.
-            </p>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="rounded-[2rem] border border-white/10 bg-black/10 px-5 py-5 shadow-[0_20px_50px_rgba(21,7,14,0.18)] sm:px-6 sm:py-6">
+                <div className="mb-4 inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-white/75">
+                  Pickup live
+                </div>
+                <BrandLogo
+                  preset="xl"
+                  tone="dark"
+                  showTagline={true}
+                  showSubline={true}
+                  className="shrink-0"
+                />
+              </div>
+              <div className="max-w-2xl">
+                <p className="text-[0.8rem] leading-snug text-slate-300 sm:text-base">
+                  Qu est-ce que tu peux recuperer le plus vite maintenant ? Ici, on ne vend pas juste
+                  des restos: on synchronise ton retrait au bon moment.
+                </p>
+              </div>
+            </div>
             <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[28rem]">
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                 <p className="text-[10px] uppercase tracking-widest text-slate-300">

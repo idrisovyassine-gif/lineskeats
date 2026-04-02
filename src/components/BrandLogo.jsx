@@ -20,6 +20,13 @@ const sizeClassByPreset = {
     tagline: "text-[11px] sm:text-xs",
     subline: "text-xs sm:text-sm",
   },
+  xl: {
+    wrap: "gap-4 sm:gap-5",
+    mark: "h-20 w-20 rounded-[1.6rem] p-3.5 sm:h-28 sm:w-28 sm:rounded-[2rem] sm:p-4",
+    title: "text-[2.6rem] sm:text-[4.3rem]",
+    tagline: "text-[11px] sm:text-[14px]",
+    subline: "text-[11px] sm:text-[15px]",
+  },
 }
 
 export default function BrandLogo({
@@ -48,16 +55,16 @@ export default function BrandLogo({
         />
       </div>
       <div className="min-w-0">
-        <div className={`lineskeats-brand leading-none ${presetClasses.title} ${titleColor}`}>
+        <div className={`lineskeats-brand leading-[0.92] ${presetClasses.title} ${titleColor}`}>
           Lineskeats
         </div>
         {showTagline ? (
-          <p className={`mt-1 font-evogria uppercase tracking-[0.18em] ${presetClasses.tagline} ${taglineColor}`}>
+          <p className={`mt-2 font-evogria uppercase tracking-[0.18em] ${presetClasses.tagline} ${taglineColor}`}>
             Le bon endroit, au bon moment.
           </p>
         ) : null}
         {showSubline ? (
-          <p className={`mt-1 font-evogria ${presetClasses.subline} ${sublineColor}`}>
+          <p className={`mt-1.5 font-evogria ${presetClasses.subline} ${sublineColor}`}>
             Cuisine et retrait synchronises.
           </p>
         ) : null}
