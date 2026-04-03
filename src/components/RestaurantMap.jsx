@@ -176,7 +176,7 @@ function LocationMarker({ onLocationFound, onLocationError, autoLocate = false }
   )
 }
 
-function FitBounds({ restaurants }) {
+function FitBounds({ restaurants, isFullscreen }) {
   const map = useMap()
   const lastBoundsSignatureRef = useRef("")
 
@@ -202,8 +202,19 @@ function FitBounds({ restaurants }) {
       return
     }
 
-    map.fitBounds(points, { padding: [40, 40] })
-  }, [map, restaurants])
+    const isMobileViewport = typeof window !== "undefined" && window.innerWidth <= 768
+    const paddingTopLeft = isMobileViewport
+      ? [28, isFullscreen ? 96 : 72]
+      : [56, 56]
+    const paddingBottomRight = isMobileViewport
+      ? [28, isFullscreen ? 190 : 128]
+      : [72, isFullscreen ? 112 : 72]
+
+    map.fitBounds(points, {
+      paddingTopLeft,
+      paddingBottomRight,
+    })
+  }, [isFullscreen, map, restaurants])
 
   return null
 }
@@ -234,8 +245,8 @@ const createRestaurantIcon = (restaurantName, waitTime, showName) =>
         <img class="restaurant-marker-pin" src="${markerPinUrl}" alt="" />
       </div>
     `,
-    iconSize: [120, 96],
-    iconAnchor: [60, 88],
+    iconSize: showName ? [120, 96] : [92, 72],
+    iconAnchor: showName ? [60, 88] : [46, 64],
     popupAnchor: [0, -60],
   })
 
@@ -366,7 +377,7 @@ export default function RestaurantMap({
             setLocationError(message)
           }}
         />
-          <FitBounds restaurants={validRestaurants} />
+          <FitBounds restaurants={validRestaurants} isFullscreen={isFullscreen} />
         <MapZoomTracker onZoomChange={setCurrentZoom} />
         <MapResizer isFullscreen={isFullscreen} />
 
