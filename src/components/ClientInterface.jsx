@@ -88,7 +88,8 @@ const estimateTravelMinutes = (distanceKm) => {
   return Math.max(4, Math.round(distanceKm * 12))
 }
 
-const formatReadyLabel = (minutes) => `Pret dans ${minutes} min`
+const formatReadyLabel = (minutes, isSynchronized = false) =>
+  `${isSynchronized ? "Retrait" : "Pret"} dans ${minutes} min`
 
 const formatClockFromNow = (minutesFromNow) => {
   const date = new Date(Date.now() + minutesFromNow * 60 * 1000)
@@ -98,8 +99,8 @@ const formatClockFromNow = (minutesFromNow) => {
   })
 }
 
-const getPickupScore = ({ waitTime, totalPickupMinutes, travelMinutes }) => {
-  if (totalPickupMinutes <= 15 && (travelMinutes ?? 99) <= 8) {
+const getPickupScore = ({ syncPickupMinutes, travelMinutes }) => {
+  if (syncPickupMinutes <= 15 && (travelMinutes ?? 99) <= 8) {
     return {
       label: "Top retrait",
       tone: "emerald",
@@ -107,11 +108,11 @@ const getPickupScore = ({ waitTime, totalPickupMinutes, travelMinutes }) => {
     }
   }
 
-  if (waitTime <= 18) {
+  if (syncPickupMinutes <= 20) {
     return {
       label: "Rapide",
       tone: "amber",
-      detail: "Cuisine qui tourne vite",
+      detail: "Retrait bien cadence",
     }
   }
 
@@ -127,7 +128,7 @@ const getPickupRankingValue = ({ waitTime, travelMinutes, distanceKm }) => {
     return waitTime
   }
 
-  let rankingValue = waitTime + travelMinutes
+  let rankingValue = Math.max(waitTime, travelMinutes)
 
   if (travelMinutes > 12) {
     rankingValue += (travelMinutes - 12) * 4
@@ -538,12 +539,12 @@ export default function ClientInterface() {
               : null
           const travelMinutes = estimateTravelMinutes(distanceKm)
           const waitTime = Number(restaurant.wait_time_minutes) || 15
-          const totalPickupMinutes = waitTime + (travelMinutes || 0)
+          const syncPickupMinutes =
+            travelMinutes === null ? waitTime : Math.max(waitTime, travelMinutes)
           const leaveInMinutes =
-            travelMinutes === null ? null : Math.max(waitTime - travelMinutes, 0)
+            travelMinutes === null ? null : Math.max(syncPickupMinutes - travelMinutes, 0)
           const pickupScore = getPickupScore({
-            waitTime,
-            totalPickupMinutes,
+            syncPickupMinutes,
             travelMinutes,
           })
           const pickupRankingValue = getPickupRankingValue({
@@ -557,11 +558,12 @@ export default function ClientInterface() {
             distanceKm,
             travelMinutes,
             waitTime,
-            totalPickupMinutes,
+            syncPickupMinutes,
             leaveInMinutes,
-            readyAtLabel: formatClockFromNow(waitTime),
-            pickupAtLabel: formatClockFromNow(totalPickupMinutes),
-            readyLabel: formatReadyLabel(waitTime),
+            prepReadyAtLabel: formatClockFromNow(waitTime),
+            readyAtLabel: formatClockFromNow(syncPickupMinutes),
+            pickupAtLabel: formatClockFromNow(syncPickupMinutes),
+            readyLabel: formatReadyLabel(syncPickupMinutes, travelMinutes !== null),
             pickupScore,
             pickupRankingValue,
           }
@@ -860,7 +862,7 @@ export default function ClientInterface() {
 
       if (!CLIENT_PAYMENT_ENABLED && data.order_id) {
         setCheckoutSuccess(
-          `Commande envoyee. Retrait estime vers ${selectedRestaurant.readyAtLabel}.`
+          `Commande envoyee. Retrait synchronise vers ${selectedRestaurant.readyAtLabel}.`
         )
         setCheckoutSuccessOrderId(data.order_id)
         setCheckoutError("")
@@ -957,7 +959,7 @@ export default function ClientInterface() {
                   className="mt-2 text-center text-xs uppercase tracking-widest"
                   style={{ color: "#64748b" }}
                 >
-                  Retrait estime vers {selectedRestaurant.readyAtLabel}
+                  Retrait synchronise vers {selectedRestaurant.readyAtLabel}
                 </p>
               </>
             )}
@@ -1018,7 +1020,7 @@ export default function ClientInterface() {
                   Strategie active
                 </p>
                 <p className="mt-2 text-sm font-semibold text-white">
-                  {userLocation ? "Cuisine + trajet" : "Cuisine live"}
+                  {userLocation ? "Cuisine synchronisee" : "Cuisine live"}
                 </p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
@@ -1127,8 +1129,8 @@ export default function ClientInterface() {
                             {bestRestaurantNow.readyLabel}
                           </h3>
                           <p className="mt-3 text-sm text-white/80 sm:text-base">
-                            {bestRestaurantNow.name} te permet un retrait rythme, avec une cuisine
-                            qui tourne en live et une heure cible deja lisible.
+                            {bestRestaurantNow.name} synchronise la cuisine avec ton arrivee pour
+                            que le retrait tombe au bon moment.
                           </p>
                           <div className="mt-5 flex flex-wrap gap-2">
                             <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-widest text-white">
@@ -1201,11 +1203,11 @@ export default function ClientInterface() {
                             <p className="mt-2 text-2xl font-semibold text-white">
                               {userLocation && bestRestaurantNow.leaveInMinutes !== null
                                 ? `Pars dans ${bestRestaurantNow.leaveInMinutes} min`
-                                : `Pret a ${bestRestaurantNow.readyAtLabel}`}
+                                : `Retrait a ${bestRestaurantNow.readyAtLabel}`}
                             </p>
                             <p className="mt-2 text-sm text-white/70">
                               {userLocation
-                                ? `Cuisine ${bestRestaurantNow.waitTime} min + marche ${bestRestaurantNow.travelMinutes} min.`
+                                ? `Retrait synchronise en ${bestRestaurantNow.syncPickupMinutes} min. Cuisine ${bestRestaurantNow.waitTime} min, marche ${bestRestaurantNow.travelMinutes} min.`
                                 : "Active ta localisation sur la carte pour synchroniser la marche."}
                             </p>
                           </div>
@@ -1214,8 +1216,8 @@ export default function ClientInterface() {
                               Pourquoi lui
                             </p>
                             <p className="mt-2 text-sm text-white/80">
-                              {bestRestaurantNow.pickupScore.detail}. Le moteur priorise le temps
-                              de cuisine live puis un retrait accessible a pied.
+                              {bestRestaurantNow.pickupScore.detail}. Le restaurant adapte la
+                              preparation a ton arrivee pour viser un retrait au bon moment.
                             </p>
                           </div>
                         </div>
@@ -1251,15 +1253,15 @@ export default function ClientInterface() {
                               <p className="mt-1 text-[11px] text-slate-400">
                                 {restaurant.travelMinutes
                                   ? `${restaurant.travelMinutes} min a pied`
-                                  : "Temps cuisine prioritaire"}
+                                  : "Cuisine en direct"}
                               </p>
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-semibold text-emerald-200">
-                                {restaurant.waitTime} min
+                                {restaurant.syncPickupMinutes} min
                               </p>
                               <p className="text-[11px] text-slate-400">
-                                retrait vers {restaurant.pickupAtLabel}
+                                retrait vers {restaurant.readyAtLabel}
                               </p>
                             </div>
                           </button>
@@ -1372,7 +1374,7 @@ export default function ClientInterface() {
                         </h3>
                         <p className="text-xs text-slate-400 sm:text-sm">
                           Trie automatiquement par vitesse de retrait
-                          {userLocation ? " et temps de trajet." : "."}
+                          {userLocation ? " et marche synchronisee." : "."}
                         </p>
                       </div>
                       <span className="rounded-full border border-white/10 px-3 py-1 text-[10px] uppercase tracking-widest text-slate-300 sm:text-xs">
@@ -1490,7 +1492,7 @@ export default function ClientInterface() {
                                     </span>
                                     <span className="mt-1 text-[11px] normal-case tracking-normal text-slate-400">
                                       {restaurant.travelMinutes
-                                        ? `${restaurant.travelMinutes} min de trajet, retrait vers ${restaurant.pickupAtLabel}`
+                                        ? `${restaurant.travelMinutes} min a pied, retrait vers ${restaurant.readyAtLabel}`
                                         : `Retrait estime a ${restaurant.readyAtLabel}`}
                                     </span>
                                   </div>
@@ -1564,9 +1566,9 @@ export default function ClientInterface() {
                         {selectedRestaurant.readyLabel}
                       </p>
                       <p className="mt-2 text-sm text-slate-300">
-                        Retrait estime vers {selectedRestaurant.readyAtLabel}
+                        Retrait synchronise vers {selectedRestaurant.readyAtLabel}
                         {selectedRestaurant.travelMinutes
-                          ? `, avec environ ${selectedRestaurant.travelMinutes} min de trajet.`
+                          ? `, avec environ ${selectedRestaurant.travelMinutes} min a pied.`
                           : "."}
                       </p>
                     </div>
