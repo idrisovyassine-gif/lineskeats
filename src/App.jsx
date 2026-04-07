@@ -1886,6 +1886,12 @@ export default function App() {
                     <p>{order.customer_name || "Client invite"}</p>
                     {order.customer_phone && <p>{order.customer_phone}</p>}
                     {order.customer_email && <p>{order.customer_email}</p>}
+                    {order.items?.guest?.requested_arrival_at && (
+                      <p>
+                        Arrivee programmee:{" "}
+                        {formatOrderDateTime(order.items.guest.requested_arrival_at)}
+                      </p>
+                    )}
                   </div>
                   {Array.isArray(order.items?.lines) && order.items.lines.length > 0 && (
                     <div className="mt-4 space-y-2 rounded-xl border border-white/10 bg-slate-900/50 p-3">
@@ -2020,6 +2026,12 @@ export default function App() {
                               <p>{order.customer_name || "Client invite"}</p>
                               {order.customer_phone && <p>{order.customer_phone}</p>}
                               {order.customer_email && <p>{order.customer_email}</p>}
+                              {order.items?.guest?.requested_arrival_at && (
+                                <p>
+                                  Arrivee programmee:{" "}
+                                  {formatOrderDateTime(order.items.guest.requested_arrival_at)}
+                                </p>
+                              )}
                             </div>
                           </div>
 

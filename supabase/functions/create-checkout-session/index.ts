@@ -48,6 +48,7 @@ serve(async (req) => {
     const cartItems = Array.isArray(body.items) ? body.items : []
     const customer = body.customer ?? {}
     const paymentMode = String(body.payment_mode ?? "stripe").trim().toLowerCase()
+    const requestedArrivalAtRaw = String(body.requested_arrival_at ?? "").trim()
 
     if (!restaurantId || cartItems.length === 0) {
       return jsonResponse({ error: "Restaurant ou panier manquant." }, 400)
@@ -90,6 +91,30 @@ serve(async (req) => {
         { error: "Ce restaurant ne peut pas encore recevoir des paiements Stripe." },
         400
       )
+    }
+
+    const quotedWaitTimeMinutes = Number(restaurant.wait_time_minutes ?? 15) || 15
+    let requestedArrivalAt: string | null = null
+
+    if (requestedArrivalAtRaw) {
+      const requestedArrivalDate = new Date(requestedArrivalAtRaw)
+
+      if (Number.isNaN(requestedArrivalDate.getTime())) {
+        return jsonResponse({ error: "Heure d'arrivee invalide." }, 400)
+      }
+
+      const minimumArrivalDate = new Date(Date.now() + quotedWaitTimeMinutes * 60 * 1000)
+
+      if (requestedArrivalDate.getTime() < minimumArrivalDate.getTime()) {
+        return jsonResponse(
+          {
+            error: `L'arrivee programmee ne peut pas etre avant ${quotedWaitTimeMinutes} min, le temps minimum annonce par le restaurant.`,
+          },
+          400
+        )
+      }
+
+      requestedArrivalAt = requestedArrivalDate.toISOString()
     }
 
     const { data: categories, error: categoriesError } = await supabase
@@ -259,6 +284,7 @@ serve(async (req) => {
           service_type: "pickup",
           customer_email: customerEmail,
           checkout_mode: paymentMode,
+          requested_arrival_at: requestedArrivalAt,
         },
       },
       total: fromCents(totalAmountCents),
@@ -267,7 +293,7 @@ serve(async (req) => {
       customer_phone: customerPhone,
       status: "pending",
       payment_status: paymentMode === "direct" ? "paid" : "pending_payment",
-      quoted_wait_time_minutes: Number(restaurant.wait_time_minutes ?? 15) || 15,
+      quoted_wait_time_minutes: quotedWaitTimeMinutes,
       platform_fee_amount: fromCents(platformFeeAmountCents),
       restaurant_amount: fromCents(restaurantAmountCents),
       currency: "eur",
@@ -309,6 +335,7 @@ serve(async (req) => {
         customer_email: customerEmail,
         platform_fee_amount: fromCents(platformFeeAmountCents).toFixed(2),
         restaurant_amount: fromCents(restaurantAmountCents).toFixed(2),
+        ...(requestedArrivalAt ? { requested_arrival_at: requestedArrivalAt } : {}),
       },
       payment_intent_data: {
         application_fee_amount: platformFeeAmountCents,

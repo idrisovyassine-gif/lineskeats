@@ -99,6 +99,39 @@ const formatClockFromNow = (minutesFromNow) => {
   })
 }
 
+const formatClockFromDate = (date) =>
+  date.toLocaleTimeString("fr-BE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+
+const roundDateUpToFiveMinutes = (date) => {
+  const nextDate = new Date(date)
+  nextDate.setSeconds(0, 0)
+
+  const minutes = nextDate.getMinutes()
+  const remainder = minutes % 5
+
+  if (remainder !== 0) {
+    nextDate.setMinutes(minutes + (5 - remainder))
+  }
+
+  return nextDate
+}
+
+const formatDateTimeLocalValue = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const hours = String(date.getHours()).padStart(2, "0")
+  const minutes = String(date.getMinutes()).padStart(2, "0")
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+const getMinutesUntilDate = (date) =>
+  Math.max(0, Math.ceil((date.getTime() - Date.now()) / 60000))
+
 const getPickupScore = ({ syncPickupMinutes, travelMinutes }) => {
   if (syncPickupMinutes <= 15 && (travelMinutes ?? 99) <= 8) {
     return {
@@ -179,6 +212,7 @@ export default function ClientInterface() {
     customerName: "",
     customerPhone: "",
     customerEmail: "",
+    scheduledArrivalAt: "",
   })
   const [checkoutError, setCheckoutError] = useState("")
   const [checkoutSuccess, setCheckoutSuccess] = useState("")
@@ -186,6 +220,7 @@ export default function ClientInterface() {
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false)
   const restaurantListRef = useRef(null)
   const supportsPublicRestaurantLiveRef = useRef(true)
+  const previousScheduledRestaurantIdRef = useRef(null)
 
   const loadRestaurants = useCallback(async ({ showLoader = true } = {}) => {
     if (showLoader) {
@@ -597,6 +632,57 @@ export default function ClientInterface() {
   const selectedRestaurant =
     enrichedRestaurants.find((restaurant) => restaurant.id === selectedRestaurantId) || null
 
+  const pickupScheduling = useMemo(() => {
+    if (!selectedRestaurant) return null
+
+    const minimumArrivalDate = roundDateUpToFiveMinutes(
+      new Date(Date.now() + selectedRestaurant.waitTime * 60 * 1000)
+    )
+    const suggestedArrivalDate = roundDateUpToFiveMinutes(
+      new Date(Date.now() + selectedRestaurant.syncPickupMinutes * 60 * 1000)
+    )
+
+    return {
+      minimumArrivalDate,
+      suggestedArrivalDate,
+      minimumValue: formatDateTimeLocalValue(minimumArrivalDate),
+      suggestedValue: formatDateTimeLocalValue(suggestedArrivalDate),
+      minimumLabel: formatClockFromDate(minimumArrivalDate),
+      suggestedLabel: formatClockFromDate(suggestedArrivalDate),
+    }
+  }, [selectedRestaurant])
+
+  const scheduledArrivalDetails = useMemo(() => {
+    if (!selectedRestaurant || !pickupScheduling) return null
+
+    const rawScheduledArrival = String(checkoutForm.scheduledArrivalAt || "").trim()
+    const parsedRequestedDate = rawScheduledArrival ? new Date(rawScheduledArrival) : null
+    const requestedDate =
+      parsedRequestedDate && !Number.isNaN(parsedRequestedDate.getTime())
+        ? parsedRequestedDate
+        : pickupScheduling.suggestedArrivalDate
+    const effectiveDate =
+      requestedDate.getTime() < pickupScheduling.minimumArrivalDate.getTime()
+        ? pickupScheduling.minimumArrivalDate
+        : requestedDate
+    const pickupLeadMinutes = getMinutesUntilDate(effectiveDate)
+    const leaveInMinutes =
+      selectedRestaurant.travelMinutes === null
+        ? null
+        : Math.max(pickupLeadMinutes - selectedRestaurant.travelMinutes, 0)
+
+    return {
+      effectiveDate,
+      effectiveValue: formatDateTimeLocalValue(effectiveDate),
+      effectiveLabel: formatClockFromDate(effectiveDate),
+      pickupLeadMinutes,
+      leaveInMinutes,
+      isAdjustedToMinimum:
+        rawScheduledArrival.length > 0 &&
+        requestedDate.getTime() < pickupScheduling.minimumArrivalDate.getTime(),
+    }
+  }, [checkoutForm.scheduledArrivalAt, pickupScheduling, selectedRestaurant])
+
   const bestRestaurantNow = filteredRestaurants[0] || null
 
   const liveRestaurantLeaders = useMemo(() => {
@@ -610,6 +696,34 @@ export default function ClientInterface() {
   const isSelectedRestaurantPaymentReady = CLIENT_PAYMENT_ENABLED
     ? Boolean(selectedRestaurant?.accepts_online_payment)
     : true
+
+  useEffect(() => {
+    if (!selectedRestaurant || !pickupScheduling) return
+
+    setCheckoutForm((prev) => {
+      const restaurantChanged = previousScheduledRestaurantIdRef.current !== selectedRestaurant.id
+      const currentDate = prev.scheduledArrivalAt ? new Date(prev.scheduledArrivalAt) : null
+      const hasValidCurrentDate = currentDate && !Number.isNaN(currentDate.getTime())
+      const needsReset =
+        restaurantChanged ||
+        !hasValidCurrentDate ||
+        currentDate.getTime() < pickupScheduling.minimumArrivalDate.getTime()
+      const nextScheduledArrivalAt = needsReset
+        ? pickupScheduling.suggestedValue
+        : prev.scheduledArrivalAt
+
+      previousScheduledRestaurantIdRef.current = selectedRestaurant.id
+
+      if (nextScheduledArrivalAt === prev.scheduledArrivalAt) {
+        return prev
+      }
+
+      return {
+        ...prev,
+        scheduledArrivalAt: nextScheduledArrivalAt,
+      }
+    })
+  }, [pickupScheduling, selectedRestaurant])
 
   const optionItemsByOption = menuOptionItems.reduce((acc, item) => {
     if (!acc[item.option_id]) acc[item.option_id] = []
@@ -810,6 +924,21 @@ export default function ClientInterface() {
       return
     }
 
+    if (!pickupScheduling || !scheduledArrivalDetails) {
+      setCheckoutError("Impossible de calculer l'arrivee programmee pour ce restaurant.")
+      return
+    }
+
+    if (
+      scheduledArrivalDetails.effectiveDate.getTime() <
+      pickupScheduling.minimumArrivalDate.getTime()
+    ) {
+      setCheckoutError(
+        `L'arrivee ne peut pas etre avant ${pickupScheduling.minimumLabel}, le minimum annonce par le restaurant.`
+      )
+      return
+    }
+
     if (CLIENT_PAYMENT_ENABLED && !isSelectedRestaurantPaymentReady) {
       setCheckoutError("Ce restaurant n'accepte pas encore les paiements en ligne.")
       return
@@ -846,6 +975,7 @@ export default function ClientInterface() {
               phone: checkoutForm.customerPhone.trim(),
               email: checkoutForm.customerEmail.trim(),
             },
+            requested_arrival_at: scheduledArrivalDetails.effectiveDate.toISOString(),
             payment_mode: CLIENT_PAYMENT_ENABLED ? "stripe" : "direct",
             success_url: `${siteOrigin}/?restaurant=${selectedRestaurant.id}&checkout=success`,
             cancel_url: `${siteOrigin}/?restaurant=${selectedRestaurant.id}&checkout=cancel`,
@@ -862,7 +992,7 @@ export default function ClientInterface() {
 
       if (!CLIENT_PAYMENT_ENABLED && data.order_id) {
         setCheckoutSuccess(
-          `Commande envoyee. Retrait synchronise vers ${selectedRestaurant.readyAtLabel}.`
+          `Commande envoyee. Arrivee programmee a ${scheduledArrivalDetails.effectiveLabel}.`
         )
         setCheckoutSuccessOrderId(data.order_id)
         setCheckoutError("")
@@ -873,6 +1003,7 @@ export default function ClientInterface() {
           customerName: "",
           customerPhone: "",
           customerEmail: "",
+          scheduledArrivalAt: pickupScheduling.suggestedValue,
         })
         setIsSubmittingOrder(false)
         return
@@ -1927,6 +2058,73 @@ export default function ClientInterface() {
                         </div>
                       </div>
 
+                      {selectedRestaurant && pickupScheduling && scheduledArrivalDetails && (
+                        <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-300">
+                                Programmer ton arrivee
+                              </label>
+                              <p className="mt-1 text-xs text-slate-400">
+                                Premiere arrivee possible a {pickupScheduling.minimumLabel}. Le
+                                restaurant annonce {selectedRestaurant.waitTime} min minimum de
+                                preparation.
+                              </p>
+                            </div>
+                            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[10px] uppercase tracking-widest text-emerald-100">
+                              Suggere: {pickupScheduling.suggestedLabel}
+                            </span>
+                          </div>
+
+                          <input
+                            type="datetime-local"
+                            value={checkoutForm.scheduledArrivalAt}
+                            min={pickupScheduling.minimumValue}
+                            step={300}
+                            onChange={(event) =>
+                              updateCheckoutField("scheduledArrivalAt", event.target.value)
+                            }
+                            className="mt-3 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white"
+                          />
+
+                          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                            <div className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3">
+                              <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                                Arrivee programmee
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-white">
+                                {scheduledArrivalDetails.effectiveLabel}
+                              </p>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3">
+                              <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                                Commande prete
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-white">
+                                {scheduledArrivalDetails.effectiveLabel}
+                              </p>
+                            </div>
+                            <div className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3">
+                              <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                                Depart conseille
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-white">
+                                {scheduledArrivalDetails.leaveInMinutes !== null
+                                  ? `Pars dans ${scheduledArrivalDetails.leaveInMinutes} min`
+                                  : "Selon ta position"}
+                              </p>
+                            </div>
+                          </div>
+
+                          {scheduledArrivalDetails.isAdjustedToMinimum && (
+                            <p className="mt-3 text-xs text-amber-200">
+                              Cette arrivee etait trop tot. Le minimum reste{" "}
+                              {pickupScheduling.minimumLabel}.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       <div className="rounded-2xl border border-emerald-400/10 bg-slate-950/50 px-4 py-3 text-xs text-slate-300">
                         {CLIENT_PAYMENT_ENABLED
                           ? "Retrait sur place uniquement. Le paiement se fait sur Stripe, sans compte obligatoire."
@@ -1945,10 +2143,12 @@ export default function ClientInterface() {
                           </div>
                           <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3">
                             <p className="text-[10px] uppercase tracking-widest text-slate-400">
-                              Heure de retrait
+                              Arrivee programmee
                             </p>
                             <p className="mt-1 text-sm font-semibold text-white">
-                              {selectedRestaurant.readyAtLabel}
+                              {scheduledArrivalDetails?.effectiveLabel ||
+                                pickupScheduling?.suggestedLabel ||
+                                selectedRestaurant.readyAtLabel}
                             </p>
                           </div>
                           <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3">
@@ -1956,8 +2156,8 @@ export default function ClientInterface() {
                               Action ideale
                             </p>
                             <p className="mt-1 text-sm font-semibold text-white">
-                              {selectedRestaurant.leaveInMinutes !== null
-                                ? `Pars dans ${selectedRestaurant.leaveInMinutes} min`
+                              {scheduledArrivalDetails?.leaveInMinutes !== null
+                                ? `Pars dans ${scheduledArrivalDetails.leaveInMinutes} min`
                                 : "Commande puis regarde la carte"}
                             </p>
                           </div>
@@ -1986,7 +2186,10 @@ export default function ClientInterface() {
                           </p>
                           {selectedRestaurant && (
                             <p className="mt-1 text-xs text-slate-400">
-                              Retrait vise a {selectedRestaurant.readyAtLabel}
+                              Arrivee programmee a{" "}
+                              {scheduledArrivalDetails?.effectiveLabel ||
+                                pickupScheduling?.suggestedLabel ||
+                                selectedRestaurant.readyAtLabel}
                               {selectedRestaurant.travelMinutes
                                 ? `, a environ ${selectedRestaurant.travelMinutes} min a pied.`
                                 : "."}
