@@ -1001,8 +1001,7 @@ export default function ClientInterface() {
               </div>
               <div className="max-w-2xl">
                 <p className="text-[0.8rem] leading-snug text-slate-300 sm:text-base">
-                  Qu est-ce que tu peux recuperer le plus vite maintenant ? Ici, on ne vend pas juste
-                  des restos: on synchronise ton retrait au bon moment.
+                  Le repas prêt quand tu arrives.
                 </p>
               </div>
             </div>
@@ -1017,15 +1016,15 @@ export default function ClientInterface() {
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                 <p className="text-[10px] uppercase tracking-widest text-slate-300">
-                  Strategie active
+                  Stratégie active
                 </p>
                 <p className="mt-2 text-sm font-semibold text-white">
-                  {userLocation ? "Cuisine synchronisee" : "Cuisine live"}
+                  {userLocation ? "Cuisine synchronisée" : "Cuisine live"}
                 </p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                 <p className="text-[10px] uppercase tracking-widest text-slate-300">
-                  Restaurants affiches
+                  Restaurants affichés
                 </p>
                 <p className="mt-2 text-sm font-semibold text-white">
                   {filteredRestaurants.length} visible{filteredRestaurants.length > 1 ? "s" : ""}
@@ -1117,6 +1116,99 @@ export default function ClientInterface() {
                     background-color: rgba(255, 247, 239, 0.16) !important;
                   }
                 `}</style>
+                <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-xl sm:p-4">
+                  <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div>
+                      <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
+                        Carte des retraits synchronises
+                      </h3>
+                      <p className="text-xs text-slate-400 sm:text-sm">
+                        La carte est prioritaire: ouvre un restaurant directement depuis ici.
+                      </p>
+                    </div>
+                  </div>
+
+                  <RestaurantMap
+                    restaurants={filteredRestaurants}
+                    heightClass="h-[380px] sm:h-[34rem]"
+                    onUserLocationChange={setUserLocation}
+                    onRestaurantSelect={(restaurant) => {
+                      navigateToClient(restaurant.id)
+                    }}
+                  />
+
+                  <div className="mt-4 flex justify-center sm:justify-start">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIsRestaurantListVisible((currentValue) => !currentValue)
+                      }
+                      className="rounded-full border border-emerald-300/30 bg-emerald-400 px-4 py-2 text-[10px] font-medium uppercase tracking-widest text-slate-950 transition hover:bg-emerald-300 sm:px-5 sm:text-xs"
+                    >
+                      {isRestaurantListVisible ? "Masquer la liste" : "Afficher la liste"}
+                    </button>
+                  </div>
+                </section>
+
+                {cuisineTypes.length > 0 && (
+                  <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-xl sm:p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3 px-1">
+                      <div>
+                        <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
+                          Filtrer la carte
+                        </h3>
+                        <p className="text-xs text-slate-400 sm:text-sm">
+                          {filteredRestaurants.length} restaurant
+                          {filteredRestaurants.length > 1 ? "s" : ""} visible
+                          {filteredRestaurants.length > 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCuisineIds([])}
+                        className={[
+                          "shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-[10px] uppercase tracking-widest transition-colors sm:px-4 sm:text-xs",
+                          selectedCuisineIds.length === 0
+                            ? "border-emerald-300/40 bg-emerald-400 text-slate-950"
+                            : "border-white/10 text-white/70 hover:border-white/30 hover:text-white",
+                        ].join(" ")}
+                      >
+                        Tous
+                      </button>
+
+                      {cuisineTypes.map((cuisine) => {
+                        const isSelected = selectedCuisineIds.includes(cuisine.id)
+
+                        return (
+                          <button
+                            key={cuisine.id}
+                            type="button"
+                            onClick={() =>
+                              setSelectedCuisineIds((prev) =>
+                                prev.includes(cuisine.id)
+                                  ? prev.filter((id) => id !== cuisine.id)
+                                  : [...prev, cuisine.id]
+                              )
+                            }
+                            className={[
+                              "shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-[10px] uppercase tracking-widest transition-colors sm:px-4 sm:text-xs",
+                              isSelected
+                                ? "border-emerald-300/40 bg-emerald-400 text-slate-950"
+                                : "border-white/10 text-white/70 hover:border-white/30 hover:text-white",
+                            ].join(" ")}
+                          >
+                            {cuisine.icon ? `${cuisine.icon} ` : ""}
+                            {getDisplayCuisineLabel(cuisine.name)}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </section>
+                )}
+
                 {bestRestaurantNow && (
                   <section className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.9fr)]">
                     <article className="pickup-hero-card overflow-hidden rounded-[2rem] border border-emerald-300/30 bg-gradient-to-br from-[#4b2732] via-[#5d3240] to-[#7a4153] text-white shadow-2xl">
@@ -1270,100 +1362,6 @@ export default function ClientInterface() {
                     </aside>
                   </section>
                 )}
-
-                {cuisineTypes.length > 0 && (
-                  <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-xl sm:p-4">
-                    <div className="mb-3 flex items-center justify-between gap-3 px-1">
-                      <div>
-                        <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
-                          Filtrer la carte
-                        </h3>
-                        <p className="text-xs text-slate-400 sm:text-sm">
-                          {filteredRestaurants.length} restaurant
-                          {filteredRestaurants.length > 1 ? "s" : ""} visible
-                          {filteredRestaurants.length > 1 ? "s" : ""}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedCuisineIds([])}
-                        className={[
-                          "shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-[10px] uppercase tracking-widest transition-colors sm:px-4 sm:text-xs",
-                          selectedCuisineIds.length === 0
-                            ? "border-emerald-300/40 bg-emerald-400 text-slate-950"
-                            : "border-white/10 text-white/70 hover:border-white/30 hover:text-white",
-                        ].join(" ")}
-                      >
-                        Tous
-                      </button>
-
-                      {cuisineTypes.map((cuisine) => {
-                        const isSelected = selectedCuisineIds.includes(cuisine.id)
-
-                        return (
-                          <button
-                            key={cuisine.id}
-                            type="button"
-                            onClick={() =>
-                              setSelectedCuisineIds((prev) =>
-                                prev.includes(cuisine.id)
-                                  ? prev.filter((id) => id !== cuisine.id)
-                                  : [...prev, cuisine.id]
-                              )
-                            }
-                            className={[
-                              "shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-[10px] uppercase tracking-widest transition-colors sm:px-4 sm:text-xs",
-                              isSelected
-                                ? "border-emerald-300/40 bg-emerald-400 text-slate-950"
-                                : "border-white/10 text-white/70 hover:border-white/30 hover:text-white",
-                            ].join(" ")}
-                          >
-                            {cuisine.icon ? `${cuisine.icon} ` : ""}
-                            {getDisplayCuisineLabel(cuisine.name)}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </section>
-                )}
-
-                <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-xl sm:p-4">
-                  <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                    <div>
-                      <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
-                        Carte des retraits synchronises
-                      </h3>
-                      <p className="text-xs text-slate-400 sm:text-sm">
-                        Chaque pin suit le temps de cuisine live. Active ta position pour voir le
-                        meilleur combo cuisine + marche.
-                      </p>
-                    </div>
-                  </div>
-
-                  <RestaurantMap
-                    restaurants={filteredRestaurants}
-                    heightClass="h-[250px] sm:h-96"
-                    onUserLocationChange={setUserLocation}
-                    onRestaurantSelect={(restaurant) => {
-                      navigateToClient(restaurant.id)
-                    }}
-                  />
-
-                  <div className="mt-4 flex justify-center sm:justify-start">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setIsRestaurantListVisible((currentValue) => !currentValue)
-                      }
-                      className="rounded-full border border-emerald-300/30 bg-emerald-400 px-4 py-2 text-[10px] font-medium uppercase tracking-widest text-slate-950 transition hover:bg-emerald-300 sm:px-5 sm:text-xs"
-                    >
-                      {isRestaurantListVisible ? "Masquer la liste" : "Afficher la liste"}
-                    </button>
-                  </div>
-                </section>
 
                 {isRestaurantListVisible && (
                   <section ref={restaurantListRef} className="space-y-4">

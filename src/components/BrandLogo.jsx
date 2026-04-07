@@ -25,7 +25,7 @@ const sizeClassByPreset = {
     mark: "h-20 w-20 rounded-[1.6rem] p-3.5 sm:h-28 sm:w-28 sm:rounded-[2rem] sm:p-4",
     title: "text-[2.6rem] sm:text-[4.3rem]",
     tagline: "text-[11px] sm:text-[14px]",
-    subline: "text-[11px] sm:text-[15px]",
+    subline: "text-[10px] sm:text-[13px]",
   },
 }
 
