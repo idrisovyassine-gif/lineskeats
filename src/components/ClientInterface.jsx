@@ -369,7 +369,9 @@ export default function ClientInterface() {
       customerName: "",
       customerPhone: "",
       customerEmail: "",
+      scheduledArrivalAt: "",
     })
+    previousScheduledRestaurantIdRef.current = null
   }, [selectedRestaurantId])
 
   useEffect(() => {
@@ -760,7 +762,9 @@ export default function ClientInterface() {
   const getProductSelectionMeta = (product) => {
     const productOptions = optionsByProduct[product.id] || []
     const productSelections = selectedOptionItemsByProduct[String(product.id)] || {}
-    const requiredOptions = productOptions.filter((option) => option.required)
+    const requiredOptions = productOptions.filter(
+      (option) => option.required && (optionItemsByOption[option.id] || []).length > 0
+    )
     const completedRequiredCount = requiredOptions.filter(
       (option) => (productSelections[String(option.id)] || []).length > 0
     ).length
@@ -825,7 +829,13 @@ export default function ClientInterface() {
     const productSelections = selectedOptionItemsByProduct[String(product.id)] || {}
 
     for (const option of productOptions) {
-      if (option.required && !(productSelections[String(option.id)] || []).length) {
+      const selectableItems = optionItemsByOption[option.id] || []
+
+      if (
+        option.required &&
+        selectableItems.length > 0 &&
+        !(productSelections[String(option.id)] || []).length
+      ) {
         setCheckoutError(`Selectionne une option pour ${product.name}.`)
         return
       }
@@ -1826,6 +1836,12 @@ export default function ClientInterface() {
                                             </div>
 
                                             <div className="mt-2 space-y-2">
+                                              {optionItems.length === 0 && (
+                                                <div className="rounded-lg border border-dashed border-white/10 px-3 py-2 text-xs text-slate-500">
+                                                  Aucun choix disponible pour cette option.
+                                                </div>
+                                              )}
+
                                               {optionItems.map((item) => (
                                                 <label
                                                   key={item.id}
