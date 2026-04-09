@@ -133,6 +133,22 @@
   border-color: var(--ls-emerald) !important;
 }
 
+.lineskeats-theme button.bg-emerald-400,
+.lineskeats-theme button.bg-emerald-500,
+.lineskeats-theme a.bg-emerald-400,
+.lineskeats-theme a.bg-emerald-500,
+.lineskeats-theme button.bg-emerald-400 span,
+.lineskeats-theme button.bg-emerald-500 span,
+.lineskeats-theme a.bg-emerald-400 span,
+.lineskeats-theme a.bg-emerald-500 span,
+.lineskeats-theme button.bg-emerald-400 p,
+.lineskeats-theme button.bg-emerald-500 p,
+.lineskeats-theme a.bg-emerald-400 p,
+.lineskeats-theme a.bg-emerald-500 p {
+  color: #fff7ef !important;
+  -webkit-text-fill-color: #fff7ef;
+}
+
 .lineskeats-theme .bg-blue-500 {
   background-color: var(--ls-header-soft) !important;
   border-color: var(--ls-header-soft) !important;
@@ -258,6 +274,22 @@
   background-color: #f8f4ed !important;
   border-color: #f8f4ed !important;
   color: var(--ls-header) !important;
+}
+
+.lineskeats-theme .theme-header-panel button.bg-emerald-400,
+.lineskeats-theme .theme-header-panel button.bg-emerald-500,
+.lineskeats-theme .theme-header-panel a.bg-emerald-400,
+.lineskeats-theme .theme-header-panel a.bg-emerald-500,
+.lineskeats-theme .theme-header-panel button.bg-emerald-400 span,
+.lineskeats-theme .theme-header-panel button.bg-emerald-500 span,
+.lineskeats-theme .theme-header-panel a.bg-emerald-400 span,
+.lineskeats-theme .theme-header-panel a.bg-emerald-500 span,
+.lineskeats-theme .theme-header-panel button.bg-emerald-400 p,
+.lineskeats-theme .theme-header-panel button.bg-emerald-500 p,
+.lineskeats-theme .theme-header-panel a.bg-emerald-400 p,
+.lineskeats-theme .theme-header-panel a.bg-emerald-500 p {
+  color: var(--ls-header) !important;
+  -webkit-text-fill-color: var(--ls-header);
 }
 
 .lineskeats-theme .leaflet-popup-content-wrapper,
