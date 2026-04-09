@@ -351,8 +351,11 @@ export default function RestaurantMap({
       </div>
 
       <MapContainer
+        className="restaurant-map"
         center={[50.5039, 4.4699]}
         zoom={8}
+        touchZoom
+        doubleClickZoom
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer

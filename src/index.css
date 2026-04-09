@@ -274,6 +274,11 @@
   border-color: var(--ls-border);
 }
 
+.restaurant-map,
+.location-picker-map {
+  touch-action: none;
+}
+
 @layer utilities {
   .glass {
     backdrop-filter: blur(16px);

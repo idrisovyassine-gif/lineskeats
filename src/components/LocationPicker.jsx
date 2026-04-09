@@ -38,7 +38,10 @@ export default function LocationPicker({
 
       try {
         // Initialiser la carte uniquement côté client
-        const leafletMap = L.map(mapId).setView([initialLat || 50.5039, initialLng || 4.4699], 13)
+        const leafletMap = L.map(mapId, {
+          touchZoom: true,
+          doubleClickZoom: true,
+        }).setView([initialLat || 50.5039, initialLng || 4.4699], 13)
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap contributors'
@@ -214,7 +217,7 @@ export default function LocationPicker({
         ) : (
           <div 
             id={mapId} 
-            className="h-64 w-full rounded-lg border border-gray-200"
+            className="location-picker-map h-64 w-full rounded-lg border border-gray-200"
           />
         )}
       </div>
