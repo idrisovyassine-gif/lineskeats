@@ -64,6 +64,13 @@ const mapPublicRestaurantRow = (row) => ({
 
 const sortRestaurantsByNewest = (a, b) => Number(b.id) - Number(a.id)
 
+const normalizeSearchValue = (value) =>
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const radius = 6371
   const deltaLat = ((lat2 - lat1) * Math.PI) / 180
@@ -192,6 +199,7 @@ export default function ClientInterface() {
   const [cuisineTypes, setCuisineTypes] = useState([])
   const [restaurantCuisineTypes, setRestaurantCuisineTypes] = useState([])
   const [selectedCuisineIds, setSelectedCuisineIds] = useState([])
+  const [restaurantSearchQuery, setRestaurantSearchQuery] = useState("")
   const [userLocation, setUserLocation] = useState(null)
   const [isRestaurantListVisible, setIsRestaurantListVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -622,14 +630,39 @@ export default function ClientInterface() {
     [restaurants, userLocation]
   )
 
-  const filteredRestaurants =
-    selectedCuisineIds.length === 0
-      ? enrichedRestaurants
-      : enrichedRestaurants.filter((restaurant) =>
-          (cuisineIdsByRestaurant[restaurant.id] || []).some((cuisineId) =>
-            selectedCuisineIds.includes(cuisineId)
-          )
+  const filteredRestaurants = useMemo(() => {
+    const normalizedSearchQuery = normalizeSearchValue(restaurantSearchQuery)
+
+    return enrichedRestaurants.filter((restaurant) => {
+      const matchesCuisine =
+        selectedCuisineIds.length === 0 ||
+        (cuisineIdsByRestaurant[restaurant.id] || []).some((cuisineId) =>
+          selectedCuisineIds.includes(cuisineId)
         )
+
+      if (!matchesCuisine) {
+        return false
+      }
+
+      if (!normalizedSearchQuery) {
+        return true
+      }
+
+      const searchableText = normalizeSearchValue(
+        [restaurant.name, restaurant.address, resolvedAddresses[restaurant.id]]
+          .filter(Boolean)
+          .join(" ")
+      )
+
+      return searchableText.includes(normalizedSearchQuery)
+    })
+  }, [
+    cuisineIdsByRestaurant,
+    enrichedRestaurants,
+    resolvedAddresses,
+    restaurantSearchQuery,
+    selectedCuisineIds,
+  ])
 
   const selectedRestaurant =
     enrichedRestaurants.find((restaurant) => restaurant.id === selectedRestaurantId) || null
@@ -1291,21 +1324,55 @@ export default function ClientInterface() {
                   </div>
                 </section>
 
-                {cuisineTypes.length > 0 && (
-                  <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-xl sm:p-4">
-                    <div className="mb-3 flex items-center justify-between gap-3 px-1">
-                      <div>
-                        <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
-                          Filtrer la carte
-                        </h3>
-                        <p className="text-xs text-slate-400 sm:text-sm">
-                          {filteredRestaurants.length} restaurant
-                          {filteredRestaurants.length > 1 ? "s" : ""} visible
-                          {filteredRestaurants.length > 1 ? "s" : ""}
-                        </p>
-                      </div>
-                    </div>
+                <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-xl sm:p-4">
+                  <div className="mb-3 px-1">
+                    <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
+                      Trouver un restaurant
+                    </h3>
+                    <p className="text-xs text-slate-400 sm:text-sm">
+                      Recherche directe par nom sur la carte et dans la liste.
+                    </p>
+                  </div>
 
+                  <div className="px-1">
+                    <label className="sr-only" htmlFor="restaurant-search">
+                      Rechercher un restaurant
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="restaurant-search"
+                        type="search"
+                        value={restaurantSearchQuery}
+                        onChange={(event) => setRestaurantSearchQuery(event.target.value)}
+                        placeholder="Rechercher un restaurant..."
+                        className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 pr-16 text-sm text-white placeholder:text-slate-500 focus:border-emerald-300/40 focus:outline-none"
+                      />
+                      {restaurantSearchQuery ? (
+                        <button
+                          type="button"
+                          onClick={() => setRestaurantSearchQuery("")}
+                          className="absolute inset-y-0 right-3 my-auto h-8 rounded-full px-2 text-[10px] uppercase tracking-widest text-slate-300 transition hover:text-white"
+                        >
+                          Effacer
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="mb-3 mt-4 flex items-center justify-between gap-3 px-1">
+                    <div>
+                      <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
+                        Filtrer la carte
+                      </h3>
+                      <p className="text-xs text-slate-400 sm:text-sm">
+                        {filteredRestaurants.length} restaurant
+                        {filteredRestaurants.length > 1 ? "s" : ""} visible
+                        {filteredRestaurants.length > 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  {cuisineTypes.length > 0 ? (
                     <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
                       <button
                         type="button"
@@ -1347,8 +1414,12 @@ export default function ClientInterface() {
                         )
                       })}
                     </div>
-                  </section>
-                )}
+                  ) : (
+                    <div className="px-1 pb-1 text-xs text-slate-500">
+                      Aucun filtre cuisine disponible pour le moment.
+                    </div>
+                  )}
+                </section>
 
                 {bestRestaurantNow && (
                   <section className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.9fr)]">
