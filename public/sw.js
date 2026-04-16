@@ -1,5 +1,12 @@
-const CACHE_NAME = "lineskeats-shell-v2"
-const APP_SHELL = ["/", "/favicon.svg", "/site.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon-180.png"]
+const CACHE_NAME = "lineskeats-shell-v3"
+const APP_SHELL = [
+  "/",
+  "/favicon.svg",
+  "/site.webmanifest",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/apple-touch-icon-180.png",
+]
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -17,22 +24,35 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return
+  const requestUrl = new URL(event.request.url)
+
+  if (requestUrl.origin !== self.location.origin) {
+    return
+  }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse
-      }
-
-      return fetch(event.request)
-        .then((networkResponse) => {
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse.ok) {
           const responseClone = networkResponse.clone()
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseClone)
           })
-          return networkResponse
-        })
-        .catch(() => caches.match("/"))
-    })
+        }
+
+        return networkResponse
+      })
+      .catch(async () => {
+        const cachedResponse = await caches.match(event.request)
+        if (cachedResponse) {
+          return cachedResponse
+        }
+
+        if (event.request.mode === "navigate") {
+          return caches.match("/")
+        }
+
+        throw new Error("Network unavailable and no cached response found.")
+      })
   )
 })
