@@ -176,7 +176,7 @@ function LocationMarker({ onLocationFound, onLocationError, autoLocate = false }
   )
 }
 
-function FitBounds({ restaurants, isFullscreen }) {
+function FitBounds({ restaurants, isFullscreen, heroMode }) {
   const map = useMap()
   const lastBoundsSignatureRef = useRef("")
 
@@ -204,17 +204,17 @@ function FitBounds({ restaurants, isFullscreen }) {
 
     const isMobileViewport = typeof window !== "undefined" && window.innerWidth <= 768
     const paddingTopLeft = isMobileViewport
-      ? [28, isFullscreen ? 96 : 72]
-      : [56, 56]
+      ? [28, isFullscreen ? 96 : heroMode ? 184 : 72]
+      : [56, heroMode ? 164 : 56]
     const paddingBottomRight = isMobileViewport
-      ? [28, isFullscreen ? 190 : 128]
-      : [72, isFullscreen ? 112 : 72]
+      ? [28, isFullscreen ? 190 : heroMode ? 104 : 128]
+      : [72, isFullscreen ? 112 : heroMode ? 168 : 72]
 
     map.fitBounds(points, {
       paddingTopLeft,
       paddingBottomRight,
     })
-  }, [isFullscreen, map, restaurants])
+  }, [heroMode, isFullscreen, map, restaurants])
 
   return null
 }
@@ -251,7 +251,9 @@ const createRestaurantIcon = (restaurantName, waitTime, showName) =>
   })
 
 export default function RestaurantMap({
+  heroMode = false,
   restaurants,
+  onRestaurantPreview,
   onRestaurantSelect,
   onUserLocationChange,
   heightClass = "h-[280px] sm:h-96",
@@ -380,7 +382,11 @@ export default function RestaurantMap({
             setLocationError(message)
           }}
         />
-          <FitBounds restaurants={validRestaurants} isFullscreen={isFullscreen} />
+        <FitBounds
+          restaurants={validRestaurants}
+          isFullscreen={isFullscreen}
+          heroMode={heroMode}
+        />
         <MapZoomTracker onZoomChange={setCurrentZoom} />
         <MapResizer isFullscreen={isFullscreen} />
 
@@ -397,7 +403,7 @@ export default function RestaurantMap({
               position={[latitude, longitude]}
               icon={iconsByRestaurantId[restaurant.id]}
               eventHandlers={{
-                click: () => onRestaurantSelect?.(restaurant),
+                click: () => onRestaurantPreview?.(restaurant),
               }}
             >
               <Popup>
@@ -440,7 +446,7 @@ export default function RestaurantMap({
                     className="mt-3 w-full rounded bg-emerald-500 px-3 py-1 text-sm text-white transition-colors hover:bg-emerald-600"
                     type="button"
                   >
-                    Voir le menu
+                    Ouvrir le menu
                   </button>
                 </div>
               </Popup>

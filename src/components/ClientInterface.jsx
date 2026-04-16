@@ -200,6 +200,7 @@ export default function ClientInterface() {
   const [restaurantCuisineTypes, setRestaurantCuisineTypes] = useState([])
   const [selectedCuisineIds, setSelectedCuisineIds] = useState([])
   const [restaurantSearchQuery, setRestaurantSearchQuery] = useState("")
+  const [activeMapRestaurant, setActiveMapRestaurant] = useState(null)
   const [userLocation, setUserLocation] = useState(null)
   const [isRestaurantListVisible, setIsRestaurantListVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -370,6 +371,8 @@ export default function ClientInterface() {
     setCartItems([])
     setSelectedOptionItemsByProduct({})
     setProductCommentsByProduct({})
+    setActiveMapRestaurant(null)
+    setIsRestaurantListVisible(false)
     setCheckoutError("")
     setCheckoutSuccess("")
     setCheckoutSuccessOrderId(null)
@@ -468,6 +471,39 @@ export default function ClientInterface() {
       block: "start",
     })
   }, [isRestaurantListVisible])
+
+  useEffect(() => {
+    if (!activeMapRestaurant) return
+
+    const matchingRestaurant = filteredRestaurants.find(
+      (restaurant) => restaurant.id === activeMapRestaurant.id
+    )
+
+    if (!matchingRestaurant) {
+      setActiveMapRestaurant(null)
+      return
+    }
+
+    if (matchingRestaurant !== activeMapRestaurant) {
+      setActiveMapRestaurant(matchingRestaurant)
+    }
+  }, [activeMapRestaurant, filteredRestaurants])
+
+  useEffect(() => {
+    if (selectedRestaurantId || typeof window === "undefined" || window.innerWidth >= 640) {
+      return undefined
+    }
+
+    const shouldLockBody = isRestaurantListVisible || Boolean(activeMapRestaurant)
+    if (!shouldLockBody) return undefined
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [activeMapRestaurant, isRestaurantListVisible, selectedRestaurantId])
 
   useEffect(() => {
     let isMounted = true
@@ -1179,32 +1215,6 @@ export default function ClientInterface() {
                 </p>
               </div>
             </div>
-            <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[28rem]">
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-[10px] uppercase tracking-widest text-slate-300">
-                  Meilleur retrait maintenant
-                </p>
-                <p className="mt-2 text-xl font-semibold text-white">
-                  {bestRestaurantNow ? bestRestaurantNow.readyLabel : "--"}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-[10px] uppercase tracking-widest text-slate-300">
-                  Stratégie active
-                </p>
-                <p className="mt-2 text-sm font-semibold text-white">
-                  {userLocation ? "Cuisine synchronisée" : "Cuisine live"}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-[10px] uppercase tracking-widest text-slate-300">
-                  Restaurants affichés
-                </p>
-                <p className="mt-2 text-sm font-semibold text-white">
-                  {filteredRestaurants.length} visible{filteredRestaurants.length > 1 ? "s" : ""}
-                </p>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -1235,348 +1245,363 @@ export default function ClientInterface() {
               </div>
             ) : (
               <>
-                <style>{`
-                  .lineskeats-theme .pickup-hero-card .text-white,
-                  .lineskeats-theme .pickup-hero-card .text-slate-300,
-                  .lineskeats-theme .pickup-hero-card .text-slate-400,
-                  .lineskeats-theme .pickup-hero-card .text-slate-500,
-                  .lineskeats-theme .pickup-hero-card .text-slate-950,
-                  .pickup-hero-card,
-                  .pickup-hero-card h1,
-                  .pickup-hero-card h2,
-                  .pickup-hero-card h3,
-                  .pickup-hero-card p,
-                  .pickup-hero-card span {
-                    color: #fff7ef !important;
-                  }
-
-                  .pickup-hero-card .text-white\\/60,
-                  .pickup-hero-card .text-white\\/70,
-                  .pickup-hero-card .text-white\\/80 {
-                    color: rgba(255, 247, 239, 0.82) !important;
-                  }
-
-                  .pickup-hero-card .bg-white\\/10 {
-                    background-color: rgba(255, 247, 239, 0.12) !important;
-                  }
-
-                  .pickup-hero-card .bg-black\\/10 {
-                    background-color: rgba(45, 18, 29, 0.28) !important;
-                  }
-
-                  .pickup-hero-card .border-white\\/15,
-                  .pickup-hero-card .border-white\\/20 {
-                    border-color: rgba(255, 247, 239, 0.16) !important;
-                  }
-
-                  .pickup-hero-card .bg-white {
-                    background-color: #fff7ef !important;
-                    color: #3e2a36 !important;
-                  }
-
-                  .pickup-hero-card .hero-primary-button,
-                  .pickup-hero-card .hero-primary-button span,
-                  .pickup-hero-card .hero-primary-button p {
-                    color: #3e2a36 !important;
-                  }
-
-                  .pickup-hero-card .hero-secondary-button,
-                  .pickup-hero-card .hero-secondary-button span,
-                  .pickup-hero-card .hero-secondary-button p {
-                    color: #fff7ef !important;
-                  }
-
-                  .pickup-hero-card .hover\\:bg-white\\/10:hover {
-                    background-color: rgba(255, 247, 239, 0.16) !important;
-                  }
-                `}</style>
-                <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-xl sm:p-4">
-                  <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                    <div>
-                      <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
-                        Carte des retraits synchronises
-                      </h3>
-                      <p className="text-xs text-slate-400 sm:text-sm">
-                        La carte est prioritaire: ouvre un restaurant directement depuis ici.
-                      </p>
-                    </div>
-                  </div>
-
+                <section className="relative overflow-hidden rounded-[2.25rem] border border-white/10 bg-slate-900/70 p-2 shadow-2xl sm:p-3">
                   <RestaurantMap
+                    heroMode
                     restaurants={filteredRestaurants}
-                    heightClass="h-[380px] sm:h-[34rem]"
+                    heightClass="h-[58vh] min-h-[30rem] sm:h-[72vh] sm:min-h-[42rem]"
                     onUserLocationChange={setUserLocation}
+                    onRestaurantPreview={(restaurant) => {
+                      setActiveMapRestaurant(restaurant)
+                      if (typeof window !== "undefined" && window.innerWidth < 640) {
+                        setIsRestaurantListVisible(false)
+                      }
+                    }}
                     onRestaurantSelect={(restaurant) => {
                       navigateToClient(restaurant.id)
                     }}
                   />
 
-                  <div className="mt-4 flex justify-center sm:justify-start">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setIsRestaurantListVisible((currentValue) => !currentValue)
-                      }
-                      className="rounded-full border border-emerald-300/30 bg-emerald-400 px-4 py-2 text-[10px] font-medium uppercase tracking-widest text-slate-950 transition hover:bg-emerald-300 sm:px-5 sm:text-xs"
-                    >
-                      {isRestaurantListVisible ? "Masquer la liste" : "Afficher la liste"}
-                    </button>
-                  </div>
-                </section>
-
-                <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-xl sm:p-4">
-                  <div className="mb-3 px-1">
-                    <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
-                      Trouver un restaurant
-                    </h3>
-                    <p className="text-xs text-slate-400 sm:text-sm">
-                      Recherche directe par nom sur la carte et dans la liste.
-                    </p>
-                  </div>
-
-                  <div className="px-1">
-                    <label className="sr-only" htmlFor="restaurant-search">
-                      Rechercher un restaurant
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="restaurant-search"
-                        type="search"
-                        value={restaurantSearchQuery}
-                        onChange={(event) => setRestaurantSearchQuery(event.target.value)}
-                        placeholder="Rechercher un restaurant..."
-                        className="w-full rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 pr-16 text-sm text-white placeholder:text-slate-500 focus:border-emerald-300/40 focus:outline-none"
-                      />
-                      {restaurantSearchQuery ? (
-                        <button
-                          type="button"
-                          onClick={() => setRestaurantSearchQuery("")}
-                          className="absolute inset-y-0 right-3 my-auto h-8 rounded-full px-2 text-[10px] uppercase tracking-widest text-slate-300 transition hover:text-white"
-                        >
-                          Effacer
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="mb-3 mt-4 flex items-center justify-between gap-3 px-1">
-                    <div>
-                      <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
-                        Filtrer la carte
-                      </h3>
-                      <p className="text-xs text-slate-400 sm:text-sm">
-                        {filteredRestaurants.length} restaurant
-                        {filteredRestaurants.length > 1 ? "s" : ""} visible
-                        {filteredRestaurants.length > 1 ? "s" : ""}
-                      </p>
-                    </div>
-                  </div>
-
-                  {cuisineTypes.length > 0 ? (
-                    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedCuisineIds([])}
-                        className={[
-                          "shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-[10px] uppercase tracking-widest transition-colors sm:px-4 sm:text-xs",
-                          selectedCuisineIds.length === 0
-                            ? "border-emerald-300/40 bg-emerald-400 text-slate-950"
-                            : "border-white/10 text-white/70 hover:border-white/30 hover:text-white",
-                        ].join(" ")}
-                      >
-                        Tous
-                      </button>
-
-                      {cuisineTypes.map((cuisine) => {
-                        const isSelected = selectedCuisineIds.includes(cuisine.id)
-
-                        return (
+                  <div className="pointer-events-none absolute inset-x-0 top-0 z-[1002] p-3 sm:p-5">
+                    <div className="max-w-xl space-y-3">
+                      <div className="pointer-events-auto rounded-[1.75rem] border border-white/10 bg-slate-950/82 p-3 shadow-xl backdrop-blur sm:p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
+                              Carte des retraits synchronises
+                            </h3>
+                            <p className="mt-1 text-xs text-slate-300 sm:text-sm">
+                              La carte pilote l experience. Cherche, filtre et ouvre un resto
+                              directement depuis ici.
+                            </p>
+                          </div>
                           <button
-                            key={cuisine.id}
                             type="button"
-                            onClick={() =>
-                              setSelectedCuisineIds((prev) =>
-                                prev.includes(cuisine.id)
-                                  ? prev.filter((id) => id !== cuisine.id)
-                                  : [...prev, cuisine.id]
-                              )
-                            }
-                            className={[
-                              "shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-[10px] uppercase tracking-widest transition-colors sm:px-4 sm:text-xs",
-                              isSelected
-                                ? "border-emerald-300/40 bg-emerald-400 text-slate-950"
-                                : "border-white/10 text-white/70 hover:border-white/30 hover:text-white",
-                            ].join(" ")}
+                            onClick={() => {
+                              setIsRestaurantListVisible((currentValue) => !currentValue)
+                              setActiveMapRestaurant(null)
+                            }}
+                            className="shrink-0 rounded-full border border-white/10 bg-slate-900/80 px-3 py-2 text-[10px] font-medium uppercase tracking-widest text-white transition hover:border-white/30 hover:text-emerald-200 sm:px-4"
                           >
-                            {cuisine.icon ? `${cuisine.icon} ` : ""}
-                            {getDisplayCuisineLabel(cuisine.name)}
+                            {isRestaurantListVisible ? "Fermer" : "Liste"}
                           </button>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div className="px-1 pb-1 text-xs text-slate-500">
-                      Aucun filtre cuisine disponible pour le moment.
-                    </div>
-                  )}
-                </section>
+                        </div>
 
-                {bestRestaurantNow && (
-                  <section className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.9fr)]">
-                    <article className="pickup-hero-card overflow-hidden rounded-[2rem] border border-emerald-300/30 bg-gradient-to-br from-[#4b2732] via-[#5d3240] to-[#7a4153] text-white shadow-2xl">
-                      <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[1.15fr_0.85fr]">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.28em] text-white/70">
-                            Meilleur choix maintenant
-                          </p>
-                          <h3 className="lineskeats-brand mt-3 text-3xl font-semibold leading-none text-white sm:text-4xl">
-                            {bestRestaurantNow.readyLabel}
-                          </h3>
-                          <p className="mt-3 text-sm text-white/80 sm:text-base">
-                            {bestRestaurantNow.name} synchronise la cuisine avec ton arrivee pour
-                            que le retrait tombe au bon moment.
-                          </p>
-                          <div className="mt-5 flex flex-wrap gap-2">
-                            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-widest text-white">
-                              {bestRestaurantNow.pickupScore.label}
-                            </span>
-                            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-widest text-white">
-                              Retrait vers {bestRestaurantNow.readyAtLabel}
-                            </span>
-                            {bestRestaurantNow.travelMinutes ? (
-                              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] uppercase tracking-widest text-white">
-                                A pied {bestRestaurantNow.travelMinutes} min
-                              </span>
+                        <div className="mt-3">
+                          <label className="sr-only" htmlFor="restaurant-search">
+                            Rechercher un restaurant
+                          </label>
+                          <div className="relative">
+                            <input
+                              id="restaurant-search"
+                              type="search"
+                              value={restaurantSearchQuery}
+                              onChange={(event) => setRestaurantSearchQuery(event.target.value)}
+                              placeholder="Rechercher un restaurant..."
+                              className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3 pr-16 text-sm text-white placeholder:text-slate-500 focus:border-emerald-300/40 focus:outline-none"
+                            />
+                            {restaurantSearchQuery ? (
+                              <button
+                                type="button"
+                                onClick={() => setRestaurantSearchQuery("")}
+                                className="absolute inset-y-0 right-3 my-auto h-8 rounded-full px-2 text-[10px] uppercase tracking-widest text-slate-300 transition hover:text-white"
+                              >
+                                Effacer
+                              </button>
                             ) : null}
                           </div>
-                          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                            <button
-                              type="button"
-                              onClick={() => navigateToClient(bestRestaurantNow.id)}
-                              className="hero-primary-button rounded-full bg-white px-5 py-3 text-xs font-semibold uppercase tracking-widest text-slate-950 transition hover:opacity-90"
-                              style={{
-                                backgroundColor: "#fff7ef",
-                                color: "#3e2a36",
-                                WebkitTextFillColor: "#3e2a36",
-                                border: "1px solid rgba(255, 247, 239, 0.72)",
-                                boxShadow: "0 10px 30px rgba(34, 12, 22, 0.18)",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  color: "#3e2a36",
-                                  WebkitTextFillColor: "#3e2a36",
-                                  fontFamily: "system-ui, sans-serif",
-                                  fontWeight: 800,
-                                  letterSpacing: "0.12em",
-                                }}
-                              >
-                                Ouvrir le menu
-                              </span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setIsRestaurantListVisible(true)}
-                              className="hero-secondary-button rounded-full border border-white/20 px-5 py-3 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-white/10"
-                              style={{
-                                color: "#fff7ef",
-                                WebkitTextFillColor: "#fff7ef",
-                                borderColor: "rgba(255, 247, 239, 0.18)",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  color: "#fff7ef",
-                                  WebkitTextFillColor: "#fff7ef",
-                                  fontFamily: "system-ui, sans-serif",
-                                  fontWeight: 800,
-                                  letterSpacing: "0.12em",
-                                }}
-                              >
-                                Comparer les tempos
-                              </span>
-                            </button>
-                          </div>
                         </div>
 
-                        <div className="grid gap-3 self-start">
-                          <div className="rounded-3xl border border-white/15 bg-black/10 p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-white/60">
-                              Synchronisation
-                            </p>
-                            <p className="mt-2 text-2xl font-semibold text-white">
-                              {userLocation && bestRestaurantNow.leaveInMinutes !== null
-                                ? `Pars dans ${bestRestaurantNow.leaveInMinutes} min`
-                                : `Retrait a ${bestRestaurantNow.readyAtLabel}`}
-                            </p>
-                            <p className="mt-2 text-sm text-white/70">
-                              {userLocation
-                                ? `Retrait synchronise en ${bestRestaurantNow.syncPickupMinutes} min. Cuisine ${bestRestaurantNow.waitTime} min, marche ${bestRestaurantNow.travelMinutes} min.`
-                                : "Active ta localisation sur la carte pour synchroniser la marche."}
-                            </p>
-                          </div>
-                          <div className="rounded-3xl border border-white/15 bg-black/10 p-4">
-                            <p className="text-[10px] uppercase tracking-widest text-white/60">
-                              Pourquoi lui
-                            </p>
-                            <p className="mt-2 text-sm text-white/80">
-                              {bestRestaurantNow.pickupScore.detail}. Le restaurant adapte la
-                              preparation a ton arrivee pour viser un retrait au bon moment.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-
-                    <aside className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-5 shadow-xl">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
+                        <div className="mt-3 flex items-center justify-between gap-3">
                           <p className="text-[10px] uppercase tracking-widest text-slate-400">
-                            Restaurants en direct
+                            {filteredRestaurants.length} restaurant
+                            {filteredRestaurants.length > 1 ? "s" : ""} visible
+                            {filteredRestaurants.length > 1 ? "s" : ""}
                           </p>
-                          <h3 className="lineskeats-menu mt-2 text-lg font-semibold text-white">
-                            Les retraits les plus rapides maintenant
-                          </h3>
+                          {selectedCuisineIds.length > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCuisineIds([])}
+                              className="text-[10px] uppercase tracking-widest text-emerald-200 transition hover:text-white"
+                            >
+                              Reinitialiser
+                            </button>
+                          ) : null}
+                        </div>
+
+                        {cuisineTypes.length > 0 ? (
+                          <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCuisineIds([])}
+                              className={[
+                                "shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-[10px] uppercase tracking-widest transition-colors sm:px-4 sm:text-xs",
+                                selectedCuisineIds.length === 0
+                                  ? "border-emerald-300/40 bg-emerald-400"
+                                  : "border-white/10 bg-slate-900/70 text-white/70 hover:border-white/30 hover:text-white",
+                              ].join(" ")}
+                            >
+                              Tous
+                            </button>
+
+                            {cuisineTypes.map((cuisine) => {
+                              const isSelected = selectedCuisineIds.includes(cuisine.id)
+
+                              return (
+                                <button
+                                  key={cuisine.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedCuisineIds((prev) =>
+                                      prev.includes(cuisine.id)
+                                        ? prev.filter((id) => id !== cuisine.id)
+                                        : [...prev, cuisine.id]
+                                    )
+                                  }
+                                  className={[
+                                    "shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-[10px] uppercase tracking-widest transition-colors sm:px-4 sm:text-xs",
+                                    isSelected
+                                      ? "border-emerald-300/40 bg-emerald-400"
+                                      : "border-white/10 bg-slate-900/70 text-white/70 hover:border-white/30 hover:text-white",
+                                  ].join(" ")}
+                                >
+                                  {cuisine.icon ? `${cuisine.icon} ` : ""}
+                                  {getDisplayCuisineLabel(cuisine.name)}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  {(activeMapRestaurant || bestRestaurantNow) && (
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1002] hidden p-5 sm:block">
+                      <div className="pointer-events-auto max-w-md rounded-[1.8rem] border border-white/10 bg-slate-950/88 p-4 shadow-2xl backdrop-blur">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.24em] text-emerald-200/80">
+                              {activeMapRestaurant ? "Apercu carte" : "Meilleur retrait maintenant"}
+                            </p>
+                            <h3 className="lineskeats-brand mt-2 text-2xl font-semibold text-white">
+                              {(activeMapRestaurant || bestRestaurantNow).name}
+                            </h3>
+                            <p className="mt-2 text-sm text-slate-300">
+                              {(activeMapRestaurant || bestRestaurantNow).readyLabel}
+                            </p>
+                          </div>
+                          {activeMapRestaurant ? (
+                            <button
+                              type="button"
+                              onClick={() => setActiveMapRestaurant(null)}
+                              className="rounded-full border border-white/10 px-3 py-1 text-[10px] uppercase tracking-widest text-slate-300 transition hover:border-white/30 hover:text-white"
+                            >
+                              Fermer
+                            </button>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1 text-[10px] uppercase tracking-widest text-slate-300">
+                            Retrait vers {(activeMapRestaurant || bestRestaurantNow).readyAtLabel}
+                          </span>
+                          {(activeMapRestaurant || bestRestaurantNow).travelMinutes ? (
+                            <span className="rounded-full border border-white/10 bg-slate-900/70 px-3 py-1 text-[10px] uppercase tracking-widest text-slate-300">
+                              A pied {(activeMapRestaurant || bestRestaurantNow).travelMinutes} min
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-4 flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              navigateToClient((activeMapRestaurant || bestRestaurantNow).id)
+                            }
+                            className="rounded-full bg-emerald-400 px-4 py-2 text-[10px] font-semibold uppercase tracking-widest transition hover:bg-emerald-300 sm:text-xs"
+                          >
+                            Ouvrir le menu
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsRestaurantListVisible(true)}
+                            className="rounded-full border border-white/10 px-4 py-2 text-[10px] uppercase tracking-widest text-white/80 transition hover:border-white/30 hover:text-white sm:text-xs"
+                          >
+                            Voir la liste
+                          </button>
                         </div>
                       </div>
-                      <div className="mt-4 space-y-3">
-                        {liveRestaurantLeaders.map((restaurant, index) => (
+                    </div>
+                  )}
+
+                  {!activeMapRestaurant && bestRestaurantNow ? (
+                    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[1002] px-3 sm:hidden">
+                      <div className="pointer-events-auto rounded-[1.5rem] border border-white/10 bg-slate-950/88 p-3 shadow-xl backdrop-blur">
+                        <p className="text-[10px] uppercase tracking-[0.24em] text-emerald-200/80">
+                          Meilleur retrait maintenant
+                        </p>
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-white">
+                              {bestRestaurantNow.name}
+                            </p>
+                            <p className="text-xs text-slate-300">{bestRestaurantNow.readyLabel}</p>
+                          </div>
                           <button
-                            key={restaurant.id}
                             type="button"
-                            onClick={() => navigateToClient(restaurant.id)}
-                            className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-left transition hover:border-white/20 hover:bg-slate-950/70"
+                            onClick={() => navigateToClient(bestRestaurantNow.id)}
+                            className="shrink-0 rounded-full bg-emerald-400 px-4 py-2 text-[10px] font-semibold uppercase tracking-widest transition hover:bg-emerald-300"
                           >
-                            <div>
-                              <p className="text-[10px] uppercase tracking-widest text-slate-400">
-                                #{index + 1}
-                              </p>
-                              <p className="mt-1 text-sm font-semibold text-white">
-                                {restaurant.name}
-                              </p>
-                              <p className="mt-1 text-[11px] text-slate-400">
-                                {restaurant.travelMinutes
-                                  ? `${restaurant.travelMinutes} min a pied`
-                                  : "Cuisine en direct"}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-semibold text-emerald-200">
-                                {restaurant.syncPickupMinutes} min
-                              </p>
-                              <p className="text-[11px] text-slate-400">
-                                retrait vers {restaurant.readyAtLabel}
-                              </p>
-                            </div>
+                            Menu
                           </button>
-                        ))}
+                        </div>
                       </div>
-                    </aside>
+                    </div>
+                  ) : null}
+                </section>
+
+                <section className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-4 shadow-lg">
+                    <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                      Meilleur retrait
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-white">
+                      {bestRestaurantNow ? bestRestaurantNow.readyLabel : "--"}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-4 shadow-lg">
+                    <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                      Strategie active
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-white">
+                      {userLocation ? "Cuisine synchronisee" : "Cuisine live"}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-4 shadow-lg">
+                    <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                      Restaurants affiches
+                    </p>
+                    <p className="mt-2 text-base font-semibold text-white">
+                      {filteredRestaurants.length} visible{filteredRestaurants.length > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </section>
+
+                {liveRestaurantLeaders.length > 0 ? (
+                  <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-4 shadow-xl">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                          Rythmes live
+                        </p>
+                        <h3 className="lineskeats-menu mt-2 text-base font-semibold text-white sm:text-lg">
+                          D autres retraits rapides a ouvrir
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="mt-4 -mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+                      {liveRestaurantLeaders.map((restaurant, index) => (
+                        <button
+                          key={restaurant.id}
+                          type="button"
+                          onClick={() => navigateToClient(restaurant.id)}
+                          className="min-w-[15rem] rounded-[1.5rem] border border-white/10 bg-slate-950/50 px-4 py-4 text-left transition hover:border-white/20 hover:bg-slate-950/70"
+                        >
+                          <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                            #{index + 1}
+                          </p>
+                          <p className="mt-2 text-sm font-semibold text-white">{restaurant.name}</p>
+                          <p className="mt-1 text-xs text-slate-400">
+                            retrait vers {restaurant.readyAtLabel}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
                   </section>
-                )}
+                ) : null}
+
+                {activeMapRestaurant && !isRestaurantListVisible ? (
+                  <div className="fixed inset-0 z-[1100] flex items-end bg-slate-950/35 sm:hidden">
+                    <button
+                      type="button"
+                      onClick={() => setActiveMapRestaurant(null)}
+                      className="absolute inset-0"
+                      aria-label="Fermer l apercu"
+                    />
+                    <div className="relative z-10 w-full rounded-t-[2rem] border border-white/10 bg-slate-950/98 p-5 shadow-2xl">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-[0.24em] text-emerald-200/80">
+                            Apercu carte
+                          </p>
+                          <h3 className="lineskeats-brand mt-2 text-2xl font-semibold text-white">
+                            {activeMapRestaurant.name}
+                          </h3>
+                          <p className="mt-2 text-sm text-slate-300">
+                            {activeMapRestaurant.description || "Cuisine disponible a proximite."}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveMapRestaurant(null)}
+                          className="rounded-full border border-white/10 px-3 py-1 text-[10px] uppercase tracking-widest text-slate-300"
+                        >
+                          Fermer
+                        </button>
+                      </div>
+
+                      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                        <div className="rounded-2xl border border-white/10 bg-slate-900/70 px-4 py-3">
+                          <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                            Retrait
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-white">
+                            {activeMapRestaurant.readyLabel}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-slate-900/70 px-4 py-3">
+                          <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                            Synchronisation
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-white">
+                            {activeMapRestaurant.leaveInMinutes !== null
+                              ? `Pars dans ${activeMapRestaurant.leaveInMinutes} min`
+                              : `Retrait ${activeMapRestaurant.readyAtLabel}`}
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="mt-4 text-xs uppercase tracking-widest text-slate-400">
+                        {getRestaurantAddress(activeMapRestaurant)}
+                      </p>
+
+                      <div className="mt-5 flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => navigateToClient(activeMapRestaurant.id)}
+                          className="flex-1 rounded-full bg-emerald-400 px-5 py-3 text-xs font-semibold uppercase tracking-widest transition hover:bg-emerald-300"
+                        >
+                          Ouvrir le menu
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRestaurantListVisible(true)
+                            setActiveMapRestaurant(null)
+                          }}
+                          className="rounded-full border border-white/10 px-4 py-3 text-[10px] uppercase tracking-widest text-white/80"
+                        >
+                          Liste
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
 
                 {isRestaurantListVisible && (
-                  <section ref={restaurantListRef} className="space-y-4">
+                  <>
+                  <section ref={restaurantListRef} className="hidden space-y-4 sm:block">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <h3 className="lineskeats-menu text-base font-semibold text-white sm:text-lg">
@@ -1719,6 +1744,77 @@ export default function ClientInterface() {
                       </div>
                     )}
                   </section>
+                  <div className="fixed inset-0 z-[1110] bg-slate-950/45 sm:hidden">
+                    <button
+                      type="button"
+                      onClick={() => setIsRestaurantListVisible(false)}
+                      className="absolute inset-0"
+                      aria-label="Fermer la liste"
+                    />
+                    <section className="absolute inset-x-0 bottom-0 max-h-[78vh] overflow-hidden rounded-t-[2rem] border border-white/10 bg-slate-950/98 shadow-2xl">
+                      <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+                        <div>
+                          <h3 className="lineskeats-menu text-base font-semibold text-white">
+                            Classement live
+                          </h3>
+                          <p className="text-xs text-slate-400">
+                            {filteredRestaurants.length} restaurant
+                            {filteredRestaurants.length > 1 ? "s" : ""} visible
+                            {filteredRestaurants.length > 1 ? "s" : ""}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsRestaurantListVisible(false)}
+                          className="rounded-full border border-white/10 px-3 py-1 text-[10px] uppercase tracking-widest text-slate-300"
+                        >
+                          Fermer
+                        </button>
+                      </div>
+
+                      <div className="max-h-[calc(78vh-5rem)] space-y-3 overflow-y-auto px-4 py-4">
+                        {filteredRestaurants.length === 0 ? (
+                          <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 px-5 py-8 text-sm text-slate-400">
+                            Aucun restaurant ne correspond au filtre selectionne.
+                          </div>
+                        ) : (
+                          filteredRestaurants.map((restaurant, index) => (
+                            <button
+                              key={restaurant.id}
+                              type="button"
+                              onClick={() => navigateToClient(restaurant.id)}
+                              className="w-full rounded-[1.5rem] border border-white/10 bg-slate-900/70 px-4 py-4 text-left"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                                    #{index + 1}
+                                  </p>
+                                  <p className="mt-2 truncate text-sm font-semibold text-white">
+                                    {restaurant.name}
+                                  </p>
+                                  <p className="mt-1 text-xs text-slate-400">
+                                    {restaurant.travelMinutes
+                                      ? `${restaurant.travelMinutes} min a pied`
+                                      : "Cuisine en direct"}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm font-semibold text-emerald-200">
+                                    {restaurant.syncPickupMinutes} min
+                                  </p>
+                                  <p className="mt-1 text-[11px] text-slate-400">
+                                    {restaurant.readyAtLabel}
+                                  </p>
+                                </div>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </section>
+                  </div>
+                  </>
                 )}
               </>
             )}
