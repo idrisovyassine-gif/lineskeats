@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { APIProvider, InfoWindow, Map, Marker, useMap } from "@vis.gl/react-google-maps"
+import { InfoWindow, Map, Marker, useMap } from "@vis.gl/react-google-maps"
+import GoogleMapsApiProvider from "./GoogleMapsApiProvider"
 import {
-  GOOGLE_MAPS_API_KEY,
   GOOGLE_MAPS_DEFAULT_CENTER,
+  GOOGLE_MAPS_SETUP_HINT,
   hasGoogleMapsApiKey,
 } from "../lib/googleMaps"
 
@@ -548,6 +549,9 @@ function RestaurantMapInner({
 }
 
 export default function RestaurantMap(props) {
+  const [isMapsReady, setIsMapsReady] = useState(false)
+  const [mapsLoadError, setMapsLoadError] = useState("")
+
   if (!hasGoogleMapsApiKey) {
     return (
       <div
@@ -563,9 +567,40 @@ export default function RestaurantMap(props) {
     )
   }
 
+  if (mapsLoadError) {
+    return (
+      <div
+        className={`flex w-full items-center justify-center rounded-3xl border border-rose-400/30 bg-slate-900/60 p-6 text-center ${props.heightClass || "h-[280px] sm:h-96"}`}
+      >
+        <div className="max-w-md space-y-2">
+          <p className="text-sm font-semibold text-rose-200">Google Maps n a pas pu se charger.</p>
+          <p className="text-xs text-slate-200">{mapsLoadError}</p>
+          <p className="text-xs text-slate-400">{GOOGLE_MAPS_SETUP_HINT}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
-      <RestaurantMapInner {...props} />
-    </APIProvider>
+    <GoogleMapsApiProvider
+      onLoad={() => {
+        setIsMapsReady(true)
+        setMapsLoadError("")
+      }}
+      onError={(message) => {
+        setIsMapsReady(false)
+        setMapsLoadError(String(message || "Google Maps n a pas pu se charger."))
+      }}
+    >
+      {isMapsReady ? (
+        <RestaurantMapInner {...props} />
+      ) : (
+        <div
+          className={`flex w-full items-center justify-center rounded-3xl border border-white/10 bg-slate-900/60 ${props.heightClass || "h-[280px] sm:h-96"}`}
+        >
+          <div className="text-sm text-slate-300">Chargement de Google Maps...</div>
+        </div>
+      )}
+    </GoogleMapsApiProvider>
   )
 }

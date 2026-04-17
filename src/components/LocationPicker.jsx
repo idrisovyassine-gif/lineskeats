@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
-import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps"
+import { Map, Marker } from "@vis.gl/react-google-maps"
+import GoogleMapsApiProvider from "./GoogleMapsApiProvider"
 import {
-  GOOGLE_MAPS_API_KEY,
   GOOGLE_MAPS_DEFAULT_CENTER,
+  GOOGLE_MAPS_SETUP_HINT,
   hasGoogleMapsApiKey,
 } from "../lib/googleMaps"
 
@@ -25,6 +26,8 @@ export default function LocationPicker({
   const [searchQuery, setSearchQuery] = useState("")
   const [mapCenter, setMapCenter] = useState(initialPosition)
   const [mapZoom, setMapZoom] = useState(initialLat && initialLng ? 13 : 11)
+  const [isMapsReady, setIsMapsReady] = useState(false)
+  const [mapsLoadError, setMapsLoadError] = useState("")
 
   useEffect(() => {
     setPosition(initialPosition)
@@ -119,6 +122,18 @@ export default function LocationPicker({
     )
   }
 
+  if (mapsLoadError) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border border-rose-400/30 bg-slate-950 p-4 text-sm text-rose-200">
+          <p>Google Maps n a pas pu se charger.</p>
+          <p className="mt-2 text-xs text-slate-300">{mapsLoadError}</p>
+          <p className="mt-2 text-xs text-slate-400">{GOOGLE_MAPS_SETUP_HINT}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -160,25 +175,40 @@ export default function LocationPicker({
           Localisation sur la carte (cliquez pour positionner)
         </label>
         <div className="overflow-hidden rounded-lg border border-gray-200">
-          <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
-            <Map
-              center={mapCenter}
-              zoom={mapZoom}
-              gestureHandling="greedy"
-              mapTypeControl={false}
-              streetViewControl={false}
-              fullscreenControl={false}
-              style={{ width: "100%", height: "16rem" }}
-              onClick={(event) => {
-                if (!event.detail.latLng) return
-                const { lat, lng } = event.detail.latLng
-                updateMarker(lat, lng)
-                reverseGeocode(lat, lng)
-              }}
-            >
-              <Marker position={position} />
-            </Map>
-          </APIProvider>
+          <GoogleMapsApiProvider
+            onLoad={() => {
+              setIsMapsReady(true)
+              setMapsLoadError("")
+            }}
+            onError={(message) => {
+              setIsMapsReady(false)
+              setMapsLoadError(String(message || "Google Maps n a pas pu se charger."))
+            }}
+          >
+            {isMapsReady ? (
+              <Map
+                center={mapCenter}
+                zoom={mapZoom}
+                gestureHandling="greedy"
+                mapTypeControl={false}
+                streetViewControl={false}
+                fullscreenControl={false}
+                style={{ width: "100%", height: "16rem" }}
+                onClick={(event) => {
+                  if (!event.detail.latLng) return
+                  const { lat, lng } = event.detail.latLng
+                  updateMarker(lat, lng)
+                  reverseGeocode(lat, lng)
+                }}
+              >
+                <Marker position={position} />
+              </Map>
+            ) : (
+              <div className="flex h-64 items-center justify-center bg-slate-950 text-sm text-slate-300">
+                Chargement de Google Maps...
+              </div>
+            )}
+          </GoogleMapsApiProvider>
         </div>
       </div>
     </div>
