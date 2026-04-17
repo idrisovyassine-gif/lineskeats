@@ -203,6 +203,7 @@ export default function ClientInterface() {
   const [activeMapRestaurant, setActiveMapRestaurant] = useState(null)
   const [userLocation, setUserLocation] = useState(null)
   const [isRestaurantListVisible, setIsRestaurantListVisible] = useState(false)
+  const [isMapFiltersExpanded, setIsMapFiltersExpanded] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [selectedRestaurantId, setSelectedRestaurantId] = useState(() =>
@@ -470,6 +471,12 @@ export default function ClientInterface() {
       behavior: "smooth",
       block: "start",
     })
+  }, [isRestaurantListVisible])
+
+  useEffect(() => {
+    if (isRestaurantListVisible) {
+      setIsMapFiltersExpanded(false)
+    }
   }, [isRestaurantListVisible])
 
   useEffect(() => {
@@ -1249,10 +1256,11 @@ export default function ClientInterface() {
                   <RestaurantMap
                     heroMode
                     restaurants={filteredRestaurants}
-                    heightClass="h-[58vh] min-h-[30rem] sm:h-[72vh] sm:min-h-[42rem]"
+                    heightClass="h-[68vh] min-h-[34rem] sm:h-[72vh] sm:min-h-[42rem]"
                     onUserLocationChange={setUserLocation}
                     onRestaurantPreview={(restaurant) => {
                       setActiveMapRestaurant(restaurant)
+                      setIsMapFiltersExpanded(false)
                       if (typeof window !== "undefined" && window.innerWidth < 640) {
                         setIsRestaurantListVisible(false)
                       }
@@ -1262,7 +1270,117 @@ export default function ClientInterface() {
                     }}
                   />
 
-                  <div className="pointer-events-none absolute inset-x-0 top-0 z-[1002] p-3 sm:p-5">
+                  <div className="pointer-events-none absolute inset-x-0 top-0 z-[1002] p-3 sm:hidden">
+                    <div className="space-y-2">
+                      <div className="pointer-events-auto flex items-center gap-2">
+                        <label className="sr-only" htmlFor="restaurant-search-mobile">
+                          Rechercher un restaurant
+                        </label>
+                        <div className="relative flex-1">
+                          <input
+                            id="restaurant-search-mobile"
+                            type="search"
+                            value={restaurantSearchQuery}
+                            onChange={(event) => setRestaurantSearchQuery(event.target.value)}
+                            placeholder="Rechercher..."
+                            className="w-full rounded-full border border-white/10 bg-slate-950/84 px-4 py-3 pr-10 text-sm text-white placeholder:text-slate-500 shadow-lg backdrop-blur focus:border-emerald-300/40 focus:outline-none"
+                          />
+                          {restaurantSearchQuery ? (
+                            <button
+                              type="button"
+                              onClick={() => setRestaurantSearchQuery("")}
+                              className="absolute inset-y-0 right-3 my-auto h-7 rounded-full px-2 text-[10px] uppercase tracking-widest text-slate-300"
+                            >
+                              X
+                            </button>
+                          ) : null}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRestaurantListVisible((currentValue) => !currentValue)
+                            setActiveMapRestaurant(null)
+                          }}
+                          className="pointer-events-auto shrink-0 rounded-full border border-white/10 bg-slate-950/84 px-4 py-3 text-[10px] font-medium uppercase tracking-widest text-white shadow-lg backdrop-blur"
+                        >
+                          Liste
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsMapFiltersExpanded((currentValue) => !currentValue)}
+                          className="pointer-events-auto shrink-0 rounded-full border border-white/10 bg-slate-950/84 px-4 py-3 text-[10px] font-medium uppercase tracking-widest text-white shadow-lg backdrop-blur"
+                        >
+                          Filtres
+                        </button>
+                      </div>
+
+                      {isMapFiltersExpanded ? (
+                        <div className="pointer-events-auto rounded-[1.6rem] border border-white/10 bg-slate-950/84 p-3 shadow-xl backdrop-blur">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                              {filteredRestaurants.length} visible
+                              {filteredRestaurants.length > 1 ? "s" : ""}
+                            </p>
+                            {selectedCuisineIds.length > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedCuisineIds([])}
+                                className="text-[10px] uppercase tracking-widest text-emerald-200"
+                              >
+                                Reinitialiser
+                              </button>
+                            ) : null}
+                          </div>
+
+                          {cuisineTypes.length > 0 ? (
+                            <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedCuisineIds([])}
+                                className={[
+                                  "shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-[10px] uppercase tracking-widest transition-colors",
+                                  selectedCuisineIds.length === 0
+                                    ? "border-emerald-300/40 bg-emerald-400"
+                                    : "border-white/10 bg-slate-900/70 text-white/70",
+                                ].join(" ")}
+                              >
+                                Tous
+                              </button>
+
+                              {cuisineTypes.map((cuisine) => {
+                                const isSelected = selectedCuisineIds.includes(cuisine.id)
+
+                                return (
+                                  <button
+                                    key={cuisine.id}
+                                    type="button"
+                                    onClick={() =>
+                                      setSelectedCuisineIds((prev) =>
+                                        prev.includes(cuisine.id)
+                                          ? prev.filter((id) => id !== cuisine.id)
+                                          : [...prev, cuisine.id]
+                                      )
+                                    }
+                                    className={[
+                                      "shrink-0 whitespace-nowrap rounded-full border px-3 py-2 text-[10px] uppercase tracking-widest transition-colors",
+                                      isSelected
+                                        ? "border-emerald-300/40 bg-emerald-400"
+                                        : "border-white/10 bg-slate-900/70 text-white/70",
+                                    ].join(" ")}
+                                  >
+                                    {cuisine.icon ? `${cuisine.icon} ` : ""}
+                                    {getDisplayCuisineLabel(cuisine.name)}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="pointer-events-none absolute inset-x-0 top-0 z-[1002] hidden p-3 sm:block sm:p-5">
                     <div className="max-w-xl space-y-3">
                       <div className="pointer-events-auto rounded-[1.75rem] border border-white/10 bg-slate-950/82 p-3 shadow-xl backdrop-blur sm:p-4">
                         <div className="flex items-start justify-between gap-3">
@@ -1435,30 +1553,6 @@ export default function ClientInterface() {
                     </div>
                   )}
 
-                  {!activeMapRestaurant && bestRestaurantNow ? (
-                    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[1002] px-3 sm:hidden">
-                      <div className="pointer-events-auto rounded-[1.5rem] border border-white/10 bg-slate-950/88 p-3 shadow-xl backdrop-blur">
-                        <p className="text-[10px] uppercase tracking-[0.24em] text-emerald-200/80">
-                          Meilleur retrait maintenant
-                        </p>
-                        <div className="mt-2 flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-white">
-                              {bestRestaurantNow.name}
-                            </p>
-                            <p className="text-xs text-slate-300">{bestRestaurantNow.readyLabel}</p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => navigateToClient(bestRestaurantNow.id)}
-                            className="shrink-0 rounded-full bg-emerald-400 px-4 py-2 text-[10px] font-semibold uppercase tracking-widest transition hover:bg-emerald-300"
-                          >
-                            Menu
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
                 </section>
 
                 <section className="grid gap-3 sm:grid-cols-3">
