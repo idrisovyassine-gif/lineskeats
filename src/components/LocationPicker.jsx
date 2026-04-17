@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useState } from "react"
-import { Map, Marker } from "@vis.gl/react-google-maps"
-import GoogleMapsApiProvider from "./GoogleMapsApiProvider"
-import {
-  GOOGLE_MAPS_DEFAULT_CENTER,
-  GOOGLE_MAPS_SETUP_HINT,
-  hasGoogleMapsApiKey,
-} from "../lib/googleMaps"
+import { useState, useEffect } from "react"
+import L from "leaflet"
+
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+})
 
 export default function LocationPicker({
   onLocationChange,
@@ -13,32 +17,67 @@ export default function LocationPicker({
   initialLng,
   initialAddress = "",
 }) {
-  const initialPosition = useMemo(
-    () => ({
-      lat: Number(initialLat) || GOOGLE_MAPS_DEFAULT_CENTER.lat,
-      lng: Number(initialLng) || GOOGLE_MAPS_DEFAULT_CENTER.lng,
-    }),
-    [initialLat, initialLng]
-  )
-  const [position, setPosition] = useState(initialPosition)
+  const [map, setMap] = useState(null)
+  const [marker, setMarker] = useState(null)
   const [address, setAddress] = useState(initialAddress)
   const [isGeocoding, setIsGeocoding] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [mapCenter, setMapCenter] = useState(initialPosition)
-  const [mapZoom, setMapZoom] = useState(initialLat && initialLng ? 13 : 11)
-  const [isMapsReady, setIsMapsReady] = useState(false)
-  const [mapsLoadError, setMapsLoadError] = useState("")
+  const [isClient, setIsClient] = useState(false)
+  const [mapId] = useState(() => `location-map-${Math.random().toString(36).substr(2, 9)}`)
+  const [mapError, setMapError] = useState(false)
 
   useEffect(() => {
-    setPosition(initialPosition)
-    setMapCenter(initialPosition)
-  }, [initialPosition])
+    setIsClient(true)
+  }, [])
 
-  const updateMarker = (lat, lng, nextAddress = address) => {
-    const nextPosition = { lat, lng }
-    setPosition(nextPosition)
-    setMapCenter(nextPosition)
-    onLocationChange({ lat, lng, address: nextAddress })
+  useEffect(() => {
+    if (!isClient) return
+
+    const timer = setTimeout(() => {
+      const mapElement = document.getElementById(mapId)
+      if (!mapElement || map) return
+
+      try {
+        const leafletMap = L.map(mapId, {
+          touchZoom: true,
+          doubleClickZoom: true,
+        }).setView([initialLat || 50.5039, initialLng || 4.4699], 13)
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+        }).addTo(leafletMap)
+
+        const initialMarker = L.marker([initialLat || 50.5039, initialLng || 4.4699]).addTo(
+          leafletMap
+        )
+
+        leafletMap.on("click", (event) => {
+          const { lat, lng } = event.latlng
+          updateMarker(lat, lng)
+          reverseGeocode(lat, lng)
+        })
+
+        setMap(leafletMap)
+        setMarker(initialMarker)
+      } catch (error) {
+        console.error("Erreur lors de l'initialisation de la carte:", error)
+        setMapError(true)
+      }
+    }, 100)
+
+    return () => {
+      clearTimeout(timer)
+      if (map) {
+        map.remove()
+      }
+    }
+  }, [isClient, mapId, initialLat, initialLng])
+
+  const updateMarker = (lat, lng) => {
+    if (marker) {
+      marker.setLatLng([lat, lng])
+    }
+    onLocationChange({ lat, lng, address })
   }
 
   const reverseGeocode = async (lat, lng) => {
@@ -77,8 +116,11 @@ export default function LocationPicker({
         const lngNum = Number.parseFloat(lon)
 
         setAddress(display_name)
-        setMapZoom(16)
-        updateMarker(latNum, lngNum, display_name)
+        updateMarker(latNum, lngNum)
+
+        if (map) {
+          map.setView([latNum, lngNum], 16)
+        }
       }
     } catch (error) {
       console.error("Erreur de geocodage:", error)
@@ -93,45 +135,25 @@ export default function LocationPicker({
   }
 
   const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert("La geolocalisation n est pas supportee par votre navigateur")
-      return
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords
+          updateMarker(latitude, longitude)
+          reverseGeocode(latitude, longitude)
+
+          if (map) {
+            map.setView([latitude, longitude], 16)
+          }
+        },
+        (error) => {
+          console.error("Erreur de geolocalisation:", error)
+          alert("Impossible d'obtenir votre position")
+        }
+      )
+    } else {
+      alert("La geolocalisation n'est pas supportee par votre navigateur")
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (currentPosition) => {
-        const { latitude, longitude } = currentPosition.coords
-        setMapZoom(16)
-        updateMarker(latitude, longitude)
-        reverseGeocode(latitude, longitude)
-      },
-      (error) => {
-        console.error("Erreur de geolocalisation:", error)
-        alert("Impossible d obtenir votre position")
-      }
-    )
-  }
-
-  if (!hasGoogleMapsApiKey) {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-lg border border-rose-400/30 bg-slate-950 p-4 text-sm text-rose-200">
-          Google Maps n est pas configure. Ajoute `VITE_GOOGLE_MAPS_API_KEY` dans `.env.local`.
-        </div>
-      </div>
-    )
-  }
-
-  if (mapsLoadError) {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-lg border border-rose-400/30 bg-slate-950 p-4 text-sm text-rose-200">
-          <p>Google Maps n a pas pu se charger.</p>
-          <p className="mt-2 text-xs text-slate-300">{mapsLoadError}</p>
-          <p className="mt-2 text-xs text-slate-400">{GOOGLE_MAPS_SETUP_HINT}</p>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -163,53 +185,40 @@ export default function LocationPicker({
           Utiliser ma position actuelle
         </button>
 
-        {address ? (
+        {address && (
           <div className="rounded-lg border border-white/10 bg-slate-950 p-3">
             <p className="text-sm text-gray-300">{address}</p>
           </div>
-        ) : null}
+        )}
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-300">
           Localisation sur la carte (cliquez pour positionner)
         </label>
-        <div className="overflow-hidden rounded-lg border border-gray-200">
-          <GoogleMapsApiProvider
-            onLoad={() => {
-              setIsMapsReady(true)
-              setMapsLoadError("")
-            }}
-            onError={(message) => {
-              setIsMapsReady(false)
-              setMapsLoadError(String(message || "Google Maps n a pas pu se charger."))
-            }}
-          >
-            {isMapsReady ? (
-              <Map
-                center={mapCenter}
-                zoom={mapZoom}
-                gestureHandling="greedy"
-                mapTypeControl={false}
-                streetViewControl={false}
-                fullscreenControl={false}
-                style={{ width: "100%", height: "16rem" }}
-                onClick={(event) => {
-                  if (!event.detail.latLng) return
-                  const { lat, lng } = event.detail.latLng
-                  updateMarker(lat, lng)
-                  reverseGeocode(lat, lng)
-                }}
+        {!isClient ? (
+          <div className="flex h-64 w-full items-center justify-center rounded-lg border border-gray-200 bg-gray-100">
+            <div className="text-gray-500">Chargement de la carte...</div>
+          </div>
+        ) : mapError ? (
+          <div className="flex h-64 w-full items-center justify-center rounded-lg border border-red-200 bg-red-50">
+            <div className="text-center text-red-500">
+              <p className="text-sm">Erreur de chargement de la carte</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-2 rounded bg-red-500 px-3 py-1 text-xs text-white"
+                type="button"
               >
-                <Marker position={position} />
-              </Map>
-            ) : (
-              <div className="flex h-64 items-center justify-center bg-slate-950 text-sm text-slate-300">
-                Chargement de Google Maps...
-              </div>
-            )}
-          </GoogleMapsApiProvider>
-        </div>
+                Reessayer
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            id={mapId}
+            className="location-picker-map h-64 w-full rounded-lg border border-gray-200"
+          />
+        )}
       </div>
     </div>
   )
