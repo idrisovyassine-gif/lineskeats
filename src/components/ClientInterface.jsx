@@ -473,23 +473,6 @@ export default function ClientInterface() {
   }, [isRestaurantListVisible])
 
   useEffect(() => {
-    if (!activeMapRestaurant) return
-
-    const matchingRestaurant = filteredRestaurants.find(
-      (restaurant) => restaurant.id === activeMapRestaurant.id
-    )
-
-    if (!matchingRestaurant) {
-      setActiveMapRestaurant(null)
-      return
-    }
-
-    if (matchingRestaurant !== activeMapRestaurant) {
-      setActiveMapRestaurant(matchingRestaurant)
-    }
-  }, [activeMapRestaurant, filteredRestaurants])
-
-  useEffect(() => {
     if (selectedRestaurantId || typeof window === "undefined" || window.innerWidth >= 640) {
       return undefined
     }
@@ -767,6 +750,23 @@ export default function ClientInterface() {
   const isSelectedRestaurantPaymentReady = CLIENT_PAYMENT_ENABLED
     ? Boolean(selectedRestaurant?.accepts_online_payment)
     : true
+
+  useEffect(() => {
+    if (!activeMapRestaurant) return
+
+    const matchingRestaurant = filteredRestaurants.find(
+      (restaurant) => restaurant.id === activeMapRestaurant.id
+    )
+
+    if (!matchingRestaurant) {
+      setActiveMapRestaurant(null)
+      return
+    }
+
+    if (matchingRestaurant !== activeMapRestaurant) {
+      setActiveMapRestaurant(matchingRestaurant)
+    }
+  }, [activeMapRestaurant, filteredRestaurants])
 
   useEffect(() => {
     if (!selectedRestaurant || !pickupScheduling) return
