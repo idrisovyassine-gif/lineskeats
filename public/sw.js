@@ -1,11 +1,12 @@
-const CACHE_NAME = "lineskeats-shell-v3"
+const CACHE_NAME = "lineskeats-shell-v4"
 const APP_SHELL = [
   "/",
-  "/favicon.svg",
+  "/favicon.png",
   "/site.webmanifest",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/apple-touch-icon-180.png",
+  "/brand/lineskeats-logo.png",
 ]
 
 self.addEventListener("install", (event) => {

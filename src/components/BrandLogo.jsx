@@ -1,28 +1,28 @@
 const sizeClassByPreset = {
   sm: {
     wrap: "gap-3",
-    mark: "h-11 w-11 rounded-2xl p-2",
+    mark: "h-11 w-11 rounded-2xl",
     title: "text-[1.6rem] sm:text-[1.8rem]",
     tagline: "text-[10px] sm:text-[11px]",
     subline: "text-[10px]",
   },
   md: {
     wrap: "gap-3.5",
-    mark: "h-14 w-14 rounded-[1.15rem] p-2.5",
+    mark: "h-14 w-14 rounded-[1.15rem]",
     title: "text-[2rem] sm:text-[2.4rem]",
     tagline: "text-[11px] sm:text-xs",
     subline: "text-[11px] sm:text-xs",
   },
   lg: {
     wrap: "gap-4",
-    mark: "h-16 w-16 rounded-[1.35rem] p-3 sm:h-[4.5rem] sm:w-[4.5rem]",
+    mark: "h-16 w-16 rounded-[1.35rem] sm:h-[4.5rem] sm:w-[4.5rem]",
     title: "text-[2.2rem] sm:text-[2.9rem]",
     tagline: "text-[11px] sm:text-xs",
     subline: "text-xs sm:text-sm",
   },
   xl: {
     wrap: "gap-4 sm:gap-5",
-    mark: "h-20 w-20 rounded-[1.6rem] p-3.5 sm:h-28 sm:w-28 sm:rounded-[2rem] sm:p-4",
+    mark: "h-20 w-20 rounded-[1.6rem] sm:h-28 sm:w-28 sm:rounded-[2rem]",
     title: "text-[2.6rem] sm:text-[4.3rem]",
     tagline: "text-[11px] sm:text-[14px]",
     subline: "text-[10px] sm:text-[13px]",
@@ -42,16 +42,16 @@ export default function BrandLogo({
   const taglineColor = isDarkTone ? "text-white/75" : "text-[var(--ls-emerald-strong)]"
   const sublineColor = isDarkTone ? "text-white/60" : "text-[var(--ls-text-soft)]"
   const markShell = isDarkTone
-    ? "bg-[#fff7ef]/98 shadow-[0_18px_34px_rgba(21,7,14,0.2)] ring-1 ring-white/15"
-    : "bg-[#fff7ef] shadow-[0_14px_30px_rgba(62,42,54,0.12)] ring-1 ring-[rgba(110,25,50,0.08)]"
+    ? "overflow-hidden shadow-[0_18px_34px_rgba(21,7,14,0.28)] ring-1 ring-white/10"
+    : "overflow-hidden shadow-[0_14px_30px_rgba(62,42,54,0.18)] ring-1 ring-[rgba(110,25,50,0.12)]"
 
   return (
     <div className={`flex items-center ${presetClasses.wrap} ${className}`.trim()}>
       <div className={`${presetClasses.mark} ${markShell} flex items-center justify-center shrink-0`}>
         <img
-          src="/brand/lineskeats-mark.svg"
+          src="/brand/lineskeats-logo.png"
           alt="Lineskeats"
-          className="h-full w-full object-contain"
+          className="h-full w-full object-cover"
         />
       </div>
       <div className="min-w-0">
